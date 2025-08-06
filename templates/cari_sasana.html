@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Temukan Sasana Terdekat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        async function cariTerdekat() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async function(pos) {
+                    const data = new FormData();
+                    data.append('latitude', pos.coords.latitude);
+                    data.append('longitude', pos.coords.longitude);
+
+                    const response = await fetch("", {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                        body: data
+                    });
+
+                    const hasil = await response.json();
+                    const list = document.getElementById('hasil');
+                    list.innerHTML = '';
+
+                    hasil.data.forEach(item => {
+                        const el = document.createElement('li');
+                        el.className = "border rounded-xl shadow-sm overflow-hidden bg-white";
+                        el.innerHTML = `
+                            <img src="${item.gambar}" alt="foto ${item.nama}" class="w-full aspect-video object-cover">
+                            <div class="p-4">
+                                <strong class="block text-lg font-semibold text-gray-800">${item.nama}</strong>
+                                <p class="text-gray-500 text-sm mt-1 leading-relaxed text-justify">${item.alamat}</p>
+                                <p class="text-gray-400 text-sm">${item.jarak} km</p>
+                                <a href="${item.link_gmap}" target="_blank" class="text-blue-600 text-sm hover:underline">Lihat di Google Maps</a>
+                            </div>
+                        `;
+                        list.appendChild(el);
+                    });
+                });
+            } else {
+                alert("Geolocation tidak didukung.");
+            }
+        }
+
+        function filterHasil() {
+            const query = document.getElementById('searchBox').value.toLowerCase();
+            const items = document.querySelectorAll('#hasil li');
+
+            items.forEach(item => {
+                const nama = item.querySelector('strong')?.textContent.toLowerCase() || '';
+                const alamat = item.innerText.toLowerCase();
+                const cocok = nama.includes(query) || alamat.includes(query);
+                item.style.display = cocok ? '' : 'none';
+            });
+        }
+
+        window.onload = cariTerdekat;
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen px-4 sm:px-6 py-6 font-sans text-base">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Temukan Sasana Terdekat</h1>
+        <p class="text-gray-600 mb-6 text-justify">Cari lokasi sasana Eltekers Indonesia terdekat dan mulai perjalanan terapi Anda sekarang!</p>
+        <input type="text" id="searchBox" placeholder="Cari sasana berdasarkan nama atau alamat..." oninput="filterHasil()" class="w-full border rounded-md px-4 py-3 mb-6 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+        
+        <h2 class="text-xl font-semibold mb-4 text-gray-700">Sasana Terdekat</h2>
+        <ul id="hasil" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <!-- Kartu hasil akan muncul di sini -->
+        </ul>
+    </div>
+</body>
+</html>

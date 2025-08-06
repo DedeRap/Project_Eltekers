@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Sign Out" %}{% endblock %}
+
+{% block content %}
+<div class="shadow-wrap">
+    <div class="form-wrap" style="text-align: center;">
+        <h2>Keluar</h2>
+        <p>Apakah Anda yakin ingin keluar?</p>
+        <form method="post" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+            <button class="reset-pass" type="submit">Keluar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

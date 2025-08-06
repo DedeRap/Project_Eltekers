@@ -1,0 +1,35 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.log
+*.pot
+
+# ===== SQLite DB (Django default) =====
+db.sqlite3
+*.sqlite3
+
+# ===== Environments =====
+.env
+*.env
+.venv/
+venv/
+ENV/
+env/
+
+# ===== IDEs =====
+.vscode/
+.idea/
+
+# ===== OS files =====
+.DS_Store
+Thumbs.db
+
+# ===== Django static/media files =====
+/static/
+media/
+
+# ===== Migrations (optional, tergantung tim) =====
+**/migrations/*.py
+!**/migrations/__init__.py

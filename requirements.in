@@ -1,0 +1,20 @@
+# === Kerangka Utama & Inti Proyek ===
+django==5.2
+django-environ==0.12.0   # Untuk mengelola variabel lingkungan (settings.py)
+python-decouple==3.8     # Alternatif untuk django-environ, pilih salah satu jika bisa
+
+# === Fitur & Aplikasi Pihak Ketiga ===
+django-allauth==65.7.0          # Untuk autentikasi (login, register, social)
+social-auth-app-django==5.4.3 # Alternatif/tambahan untuk social auth
+django-guardian==3.0.0          # Untuk perizinan tingkat objek
+django-htmx==1.23.0             # Untuk integrasi dengan HTMX
+django-recaptcha==4.1.0         # Untuk Google reCAPTCHA
+pillow==11.2.1                  # Untuk memproses gambar (ImageField)
+
+# === Utilitas & Pengembangan ===
+django-extensions==4.1    # Alat bantu development yang sangat berguna
+django-cleanup==9.0.0     # Otomatis menghapus file saat objek dihapus
+
+# === Alat Bantu (bukan bagian dari aplikasi utama) ===
+# Sebaiknya pisahkan ini ke file requirements-dev.in nanti, tapi kita mulai dari sini
+pip-tools==7.4.1

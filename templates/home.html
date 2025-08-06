@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Pengaturan{% endblock title %}
+{% load account %} {% block content %}
+
+
+
+{# Memeriksa apakah email utama ada dan statusnya belum terverifikasi #}
+{% if primary_email and not primary_email.verified %}
+
+    <div class="shadow-wrap">
+        <div class="form-wrap" style="text-align: center;">
+            <h2 style="color: #e67e22;">Satu Langkah Lagi!</h2>
+            <p style="color: #545D7A; margin: 20px 0; line-height: 1.6;">
+                Akun Anda belum aktif sepenuhnya. Email konfirmasi telah dikirim ke <strong>{{ user.email }}</strong>.
+                <br>
+                Silakan periksa inbox (dan folder spam) Anda lalu klik link di dalamnya untuk memverifikasi akun Anda.
+            </p>
+            
+            <form method="post" action="{% url 'account_email' %}">
+                {% csrf_token %}
+                <button class="reset-pass" type="submit">Kirim Ulang Email Verifikasi</button>
+            </form>
+        </div>
+    </div>
+
+{% else %}
+
+    <div class="profile-card">
+        <div class="profile-image">
+            {% if user.profile.image and user.profile.image.url %}
+                <img src="{{ user.profile.image.url }}" alt="Profile Picture">
+            {% else %}
+                <img src="{% static 'images/avatar.svg' %}" alt="Default Avatar">
+            {% endif %}
+        </div>
+        <div class="profile-details">
+            <h2>Selamat Datang, {{ user.profile.name|default:user.username }}</h2>
+            <p class="username">@{{ user.username }}</p>
+
+            <h3 style="color: #545D7A; font-weight: 500; margin-bottom: 20px;">
+                Jabatan: {{ user.get_level_display }}
+            </h3>
+
+            <div class="profile-actions">
+                <a href="{% url 'profile_edit' %}" class="btn btn-edit">Edit Profile</a>
+                <a href="{% url 'account_logout' %}" class="btn btn-logout">Logout</a>
+                <p class="mt-2"><a href="{% url 'password_change' %}">Ganti Sandi</a></p>
+            </div>
+        </div>
+    </div>
+
+{% endif %}
+{% endblock content %}

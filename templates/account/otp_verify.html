@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="shadow-wrap">
+  <div class="form-wrap">
+    <h2>Mohon Verifikasi Kode OTP</h2>
+    <form method="POST" id="otpForm">
+        {% csrf_token %}
+        <input type="text" name="otp" placeholder="Masukkan 6-digit kode" required />
+        <input type="hidden" name="g-recaptcha-response" id="id_g-recaptcha-response">
+        <button type="submit">Verifikasi</button>
+    </form>
+
+    <!-- Tombol Resend OTP  -->
+    <form method="POST" action="{% url 'resend_otp' %}">
+      {% csrf_token %}
+      <!-- <a class="resend-otp" style="color: #10182F; font-size: 15px; margin-top: 20px; text-align: center; line-height: 25px; display: block; text-decoration: none; text-decoration: underline;" href="{% url 'resend_otp' %}">Signup</a> -->
+      <button type="submit" style="margin-top: 10px;">Kirim Ulang OTP</button>
+      {% if messages %}
+        {% for message in messages %}
+          <div style="color: green; margin-bottom: 10px;">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    </form>
+
+    {% if otp_expiry_timestamp %}
+      <p>OTP Kadaluarsa dalam: <span id="countdown"></span></p>
+    {% endif %}
+
+      <script>
+        const countdownElement = document.getElementById("countdown");
+        const expiryTime = Number("{{ otp_expiry_timestamp|safe }}");
+        console.log("Expiry time:", expiryTime);  // Ini kebutuhan debug
+    
+        function updateCountdown() {
+          const now = new Date().getTime();
+          const distance = expiryTime - now;
+          
+          if (distance <= 0) {
+            countdownElement.innerHTML = "Telah Kadaluarsa!";
+          } else {
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            countdownElement.innerHTML = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            setTimeout(updateCountdown, 1000);
+          }
+        }
+        
+        if (expiryTime > 0) {
+          updateCountdown();
+        }
+      </script>
+    
+    {% if error %}
+      <p style="color: red;">{{ error }}</p>
+    {% endif %}
+  </div>
+</div>
+
+<script src="https://www.google.com/recaptcha/api.js?render={{ site_key_v3 }}"></script>
+<script>
+    // Pastikan skrip menargetkan form dengan id="otpForm"
+    document.getElementById('otpForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        grecaptcha.ready(function() {
+            grecaptcha.execute('{{ site_key_v3 }}', {action: 'otp_verify'}).then(function(token) {
+                document.getElementById('id_g-recaptcha-response').value = token;
+                document.getElementById('otpForm').submit();
+            });
+        });
+    });
+</script>
+{% endblock content %}

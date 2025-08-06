@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Masuk Menggunakan Akun{% endblock title %}
+
+{% block head %}
+{{ block.super }}
+{# Ini adalah lokasi yang lebih baik untuk meta tag cache-control #}
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+{{ form.media }}
+{% endblock head %}
+
+{% block content %}
+<div class="shadow-wrap">
+    <div class="form-wrap">
+        <h2 style="text-align: center;">Masukkan Akun</h2>
+
+        <form action="?" method="POST">
+            {% csrf_token %}
+
+            {# Tampilkan error umum (misal: "Username dan password tidak cocok.") #}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {# Render field username #}
+            <div class="form-field-container">
+                <label for="{{ form.login.id_for_label }}">Username atau Email:</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="invalid-feedback d-block">{{ form.username.errors.as_text }}</div>
+                {% endif %}
+            </div>
+            
+            {# Render field password #}
+            <div class="form-group mb-3">
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <div class="invalid-feedback d-block">{{ form.password.errors.as_text }}</div>
+                {% endif %}
+            </div>
+            
+            {# Render field captcha. Django-recaptcha akan otomatis membuat HTML yang benar #}
+            <label>Centang reCAPTCHA</label>
+            <div class="form-group mb-3">
+                {{ form.captcha }}
+                {% if form.captcha.errors %}
+                    <div class="invalid-feedback d-block">Verifikasi reCAPTCHA wajib dicentang.</div>
+                {% endif %}
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Masuk</button>
+        </form>
+
+        <hr>
+
+        <div class="text-center">
+            <p style="text-align: center; color: #545D7A; margin-bottom: 30px; margin-top: 35px;">
+            Belum punya akun? <a href="{% url "account_signup" %}" class="signup-link">Daftar di sini</a>.
+            </p>
+            <p class="mt-2"><a class="Forgotten-password" href="{% url "password_reset_request" %}">Lupa Sandi?</a></p>
+        </div>
+
+        {# {% include 'social_accounts\social_logins.html' %} #}
+        
+    </div>
+</div>
+{% endblock content%}

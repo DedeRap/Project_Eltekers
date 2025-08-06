@@ -1,0 +1,135 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Form Sasana</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/sasana_theme.css' %}">
+</head>
+<body style="background-color: #f8f9fa;">
+
+    <nav class="navbar navbar-expand-lg" style="background-color: #0d47a1;">
+        <div class="container">
+            <a class="navbar-brand text-white fw-bold" href="#">ELTEKERS INDONESIA</a>
+        </div>
+    </nav>
+
+    {% if user.level >= 3 %}
+    <div class="container mt-5 mb-5">
+        <div class="card shadow-lg border-0">
+            <div class="card-header text-white text-center" style="background-color: #0d47a1;">
+                <h3 class="mb-0 fw-bold">Formulir Data Sasana</h3>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" enctype="multipart/form-data" id="sasanaForm">
+                    {% csrf_token %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <strong>Terdapat kesalahan pada input Anda:</strong>
+                            <ul>
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li>{{ field|title }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.nama_sasana.id_for_label }}" class="form-label fw-semibold">Nama Sasana:</label>
+                        {{ form.nama_sasana }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.sejak.id_for_label }}" class="form-label fw-semibold">Tahun Berdiri:</label>
+                        {{ form.sejak }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.alamat_sasana.id_for_label }}" class="form-label fw-semibold">Alamat Lengkap:</label>
+                        {{ form.alamat_sasana }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_provinsi" class="form-label fw-semibold">{{ form.provinsi.label }}:</label>
+                        {{ form.provinsi }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_kota" class="form-label fw-semibold">{{ form.kota_kabupaten.label }}:</label>    
+                        {{ form.kota_kabupaten }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_kecamatan" class="form-label fw-semibold">{{ form.kecamatan.label }}:</label>
+                        {{ form.kecamatan }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_kelurahan" class="form-label fw-semibold">{{ form.kelurahan.label }}:</label>
+                        {{ form.kelurahan }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.jumlah_instruktur.id_for_label }}" class="form-label fw-semibold">{{ form.jumlah_instruktur.label }}:</label>
+                        {{ form.jumlah_instruktur }}
+                    </div>
+                     <div class="mb-3">
+                        <label for="{{ form.jumlah_peserta.id_for_label }}" class="form-label fw-semibold">{{ form.jumlah_peserta.label }}:</label>
+                        {{ form.jumlah_peserta }}
+                    </div>
+                     <div class="mb-3">
+                        <label for="{{ form.peserta_aktif.id_for_label }}" class="form-label fw-semibold">{{ form.peserta_aktif.label }}:</label>
+                        {{ form.peserta_aktif }}
+                    </div>
+                     <div class="mb-3">
+                        <label for="{{ form.jumlah_latihan_per_minggu.id_for_label }}" class="form-label fw-semibold">{{ form.jumlah_latihan_per_minggu.label }}:</label>
+                        {{ form.jumlah_latihan_per_minggu }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.link_gmap.id_for_label }}" class="form-label fw-semibold">Link Google Maps:</label>
+                        {{ form.link_gmap }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.profile.id_for_label }}" class="form-label fw-semibold">Profile Image:</label>
+                        {{ form.profile }}
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <input type="hidden" name="g-recaptcha-response" id="id_g-recaptcha-response">
+
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">Simpan</button>
+                        <a href="{% url 'list-sasana' %}" class="btn btn-secondary w-100 fw-bold">Kembali</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if form.instance.pk %}
+    <script>
+        const savedLocation = {
+            provinsi: "{{ form.instance.provinsi|escapejs }}",
+            kota: "{{ form.instance.kota_kabupaten|escapejs }}",
+            kecamatan: "{{ form.instance.kecamatan|escapejs }}",
+            kelurahan: "{{ form.instance.kelurahan|escapejs }}"
+        };
+    </script>
+    {% endif %}
+
+    <script src="{% static 'js/lokasi.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://www.google.com/recaptcha/api.js?render={{ site_key_v3 }}"></script>
+    <script>
+        document.getElementById('sasanaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            grecaptcha.ready(function() {
+                // Perbaikan kecil: sesuaikan action name agar cocok
+                grecaptcha.execute('{{ site_key_v3 }}', {action: 'submit_sasana_form'}).then(function(token) {
+                    document.getElementById('id_g-recaptcha-response').value = token;
+                    document.getElementById('sasanaForm').submit();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

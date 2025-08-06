@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Latihan Gerakan - Eltekers Indonesia</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .sidebar {
+      width: 350px;
+      min-height: 100vh;
+      background-color: white;
+      border-right: 2px solid #B5B5B5;
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding: 0;
+      transition: transform 0.5s ease;
+      z-index: 1000;
+    }
+
+    .sidebar.closed {
+      transform: translateX(-100%);
+    }
+
+    .sidebar .nav-link {
+      color: black;
+      font-weight: 500;
+      font-size: 16px;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      border-radius: 10px;
+    }
+
+    .sidebar .nav-link.active {
+      background-color: #1408FA;
+      color: white;
+    }
+
+    .sidebar .nav-link.active img {
+      filter: invert(1);
+    }
+
+    .sidebar .nav-link:not(.active):hover {
+      background-color: #BECEFC;
+    }
+
+    .sidebar img.icon {
+      width: 23px;
+      height: 23px;
+      margin-right: 15px;
+    }
+
+    .app-logo {
+      width: 40px;
+      height: 40px;
+      margin-left: 20px;
+      margin-top: 20px;
+    }
+
+    .app-title {
+      font-weight: 600;
+      font-size: 20px;
+      color: #1408FA;
+      margin-left: 15px;
+      margin-right: 20px;
+      margin-top: 20px;
+    }
+
+    .toggle-btn {
+      position: fixed;
+      top: 15px;
+      left: 308px;
+      z-index: 1100;
+      background-color: #ffffff;
+      color: #7c7c7c;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 18px;
+      transition: left 0.5s ease;
+      cursor: pointer;
+    }
+
+    .toggle-btn:hover {
+      background-color: #1408FA;
+      color: #ffffff;
+    }
+
+    .sidebar.closed + .toggle-btn {
+      left: 0px;
+    }
+
+    .main-content {
+      margin-left: 350px;
+      padding: 50px;
+      background-color: #f9f9f9;
+      transition: margin-left 0.5s ease;
+    }
+
+    .sidebar.closed ~ .main-content {
+      margin-left: 0;
+    }
+
+    h5 {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 18px;
+      color: #1408FA;
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      color: #000000;
+      margin-bottom: 12px;
+    }
+
+    .form-check-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      color: #000000;
+      padding-left: 6px;
+    }
+
+    .form-check-input {
+      transform: scale(1.25);
+      margin-right: 10px;
+    }
+
+    .btn-custom {
+      width: 250px;
+      height: 50px;
+      display: block;
+      margin-left: 0;
+      margin-right: auto;
+      background-color: #ffffff;
+      border-radius: 10px;
+      border: 2px solid #7c7c7c;
+      font-size: 16px;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      color: #7c7c7c;
+    }
+
+    .btn-custom:hover {
+      background-color: #0f07d1; /* warna hover bisa dikurangin gelap dikit */
+      border-color: #0f07d1;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  {% load static %}
+  <div class="sidebar d-flex flex-column" id="sidebar">
+    <div class="d-flex align-items-center mb-4">
+      <img src="{% static 'assets/logo.jpg' %}" alt="Eltekers Logo" class="app-logo" />
+      <div class="app-title">Eltekers Indonesia</div>
+    </div>
+
+    <a href="index.html" class="nav-link">
+      <img src="{% static 'assets/home.png' %}" class="icon" alt="Home" />
+      <span>Home</span>
+    </a>
+
+    <a href="{% url "lokasi" %}" class="nav-link">
+      <img src="{% static 'assets/location.png' %}" class="icon" alt="Lokasi">
+      Lokasi Sasana
+    </a>
+
+    <a href="{% url "analisa" %}" class="nav-link">
+      <img src="{% static 'assets/yoga.png' %}" class="icon" alt="Analisa" />
+      <span>Analisa Gerakan</span>
+    </a>
+
+    <div class="nav-link active">
+      <img src="{% static 'assets/weightlifting.png' %}" class="icon" alt="Latihan" />
+      <span>Latihan Gerakan</span>
+    </div>
+
+    <a href="{% url "home" %}" class="nav-link">
+      <img src="{% static 'assets/settings.png' %}" class="icon" alt="Pengaturan">
+      Pengaturan
+    </a>
+  </div>
+
+  <button id="toggleSidebar" class="toggle-btn">☰</button>
+
+  <div class="main-content" id="mainContent">
+    <h4 class="fw-bold">Latihan Gerakan</h4>
+    <p>Jawab beberapa pertanyaan sederhana agar kami dapat merekomendasikan latihan yang sesuai dengan anda</p>
+
+    <div class="mb-4">
+      <h5>Pertanyaan 1</h5>
+      <p>Apakah anda memiliki riwayat penyakit tertentu?</p>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="jantung" />
+        <label class="form-check-label" for="jantung">Jantung</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="diabetes" />
+        <label class="form-check-label" for="diabetes">Diabetes</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="asma" />
+        <label class="form-check-label" for="asma">Asma</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="hipertensi" />
+        <label class="form-check-label" for="hipertensi">Hipertensi</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="lainnya" />
+        <label class="form-check-label" for="lainnya">Lainnya</label>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <h5>Pertanyaan 2</h5>
+      <p>Apakah ada bagian tubuh yang cedera dan terbatas gerakannya?</p>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="lutut" />
+        <label class="form-check-label" for="lutut">Lutut</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="pinggang" />
+        <label class="form-check-label" for="pinggang">Pinggang</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="bahu" />
+        <label class="form-check-label" for="bahu">Bahu</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="pergelangan" />
+        <label class="form-check-label" for="pergelangan">Pergelangan Tangan</label>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <h5>Pertanyaan 3</h5>
+      <p>Gerakan apa yang sulit anda lakukan saat ini?</p>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="jongkok" />
+        <label class="form-check-label" for="jongkok">Jongkok</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="membungkuk" />
+        <label class="form-check-label" for="membungkuk">Membungkuk</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="angkat-tangan" />
+        <label class="form-check-label" for="angkat-tangan">Mengangkat Tangan</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="berjalan" />
+        <label class="form-check-label" for="berjalan">Berjalan Jauh</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="tidak-ada" />
+        <label class="form-check-label" for="tidak-ada">Tidak ada masalah</label>
+      </div>
+    </div>
+
+    <div class="text-end mt-4">
+      <button type="submit" class="btn btn-custom">Submit</button>
+    </div>
+  </div>
+
+  <script>
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const sidebar = document.getElementById('sidebar');
+
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('closed');
+    });
+  </script>
+</body>
+</html>

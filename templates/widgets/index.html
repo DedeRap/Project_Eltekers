@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock title %}
+
+{% block content %}
+{% load static %}
+<div class="main-content" id="mainContent">
+  <div class="hero-section">
+    <img src="{% static 'assets/image-1.jpg' %}" alt="Hero Image">
+  </div>
+  
+  <div class="brand-title">
+    <span class="E">E</span><span class="L">L</span><span class="T">T</span><span class="E">E</span><span class="K">K</span><span class="E">E</span><span class="R">R</span><span class="S">S</span>
+  </div>
+
+  <div class="subtitle">INDONESIA</div>
+  <div class="tagline">
+    <div>Eltekers Indonesia</div>
+    <div>Pecinta Ling Tien Kung</div>
+    <div>Untuk Sehat Paripurna</div>
+  </div>
+  
+  <div class="row mt-5 g-5">
+    <div class="col-md-6">
+      <img src="{% static 'assets/image-2.jpg' %}" alt="Tentang Gambar" class="about-img">
+    </div>
+    
+    <div class="col-md-6">
+      <div class="section-heading">Tentang</div>
+      <div class="section-body">
+        Halaman ini menyediakan informasi mengenai berbagai jenis terapi yang dapat mendukung pemulihan dan peningkatan performa atlet maupun individu yang aktif berlatih bela diri. Pengguna dapat menemukan terapi seperti fisioterapi, pijat olahraga, akupunktur, serta metode pemulihan lainnya. Setiap terapi dilengkapi dengan deskripsi manfaat, lokasi penyedia layanan, serta kontak untuk konsultasi atau pemesanan sesi terapi.
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mt-5 g-5">
+    <div class="col-md-6 order-md-2">
+      <img src="{% static 'assets/image-3.jpg' %}" alt="Testimoni Gambar" class="testimonial-img">
+    </div>
+    <div class="col-md-6">
+      <div class="section-heading">Testimoni Pengguna</div>
+      <div class="section-body">
+        <p>"Saya mengalami nyeri lutut selama bertahun-tahun karena osteoarthritis. Setelah menjalani terapi di Eltekers, sekarang saya bisa berjalan lebih nyaman tanpa rasa sakit berlebihan."<br> - Budi Sanjaya, 26 tahun</p>
+        <p>"Dulu saya sering sakit punggung karena pekerjaan yang banyak duduk. Program terapi di Eltekers sangat membantu, sekarang badan lebih ringan dan nyaman."<br> - Ibu Rina, 48 tahun</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

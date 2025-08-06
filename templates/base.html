@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}{% endblock title %}</title>
+        {% load static %}
+        <link rel="stylesheet" href="{% static "css/style.css" %}">
+        <link rel="icon" type="image/png" href="{% static "favicon.jpg" %}">
+    </head>
+    <body>
+        
+        <link rel="stylesheet" href="{% static "css/widgets.css" %}">
+        <div class="sidebar d-flex flex-column" id="sidebar">
+            <div class="d-flex align-items-center mb-4">
+                <img src="{% static 'assets/logo.jpg' %}" alt="Eltekers Logo" class="app-logo" />
+                <div class="app-title">Eltekers Indonesia</div>
+            </div>
+            
+            <a href="{% url "index" %}" class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+                <img src="{% static 'assets/home.png' %}" class="icon" alt="Home" />
+                <span>Home</span>
+            </a>
+            
+            <a href="{% url "lokasi" %}" class="nav-link {% if request.resolver_match.url_name == 'lokasi' %}active{% endif %}">
+                <img src="{% static 'assets/location.png' %}" class="icon" alt="Lokasi" />
+                Lokasi Sasana
+            </a>
+            
+            {% if user.level >= 3 %}
+            <a href="{% url "analisa" %}" class="nav-link {% if request.resolver_match.url_name == 'analisa' %}active{% endif %}">
+                <img src="{% static 'assets/yoga.png' %}" class="icon" alt="Analisa" />
+                <span>Analisa Gerakan</span>
+            </a>
+            {% endif %}
+
+            {# Yang "user.level == 4" itu hapus saja kalau mode produksi #}
+            {% if user.level >= 2 or user.level == 5 %}
+            <a href="{% url "latihan" %}" class="nav-link {% if request.resolver_match.url_name == 'latihan' %}active{% endif %}">
+                <img src="{% static 'assets/weightlifting.png' %}" class="icon" alt="Latihan" />
+                <span>Latihan Gerakan</span>
+            </a>
+            {% endif %}
+            
+            {% if user.level == 3 %}
+            <a href="{% url "list-sasana" %}" class="nav-link {% if request.resolver_match.url_name == 'list-sasana' %}active{% endif %}">
+                <img src="{% static 'assets/kelola_data.png' %}" class="icon" alt="Data" />
+                <span>Kelola Data</span>
+            </a>
+            {% endif %}
+
+            {% if user.level == 4 or user.level == 5 %}
+            <a href="{% url "create-sasana" %}" class="nav-link {% if request.resolver_match.url_name == 'create-sasana' %}active{% endif %}">
+                <img src="{% static 'assets/kelola_data.png' %}" class="icon" alt="Data" />
+                <span>Tambah/Membuat Data</span>
+            </a>
+            {% endif %}
+
+            {% if user.is_staff and user.level == 5 %}
+            <a href="{% url "admin:index" %}" class="nav-link {% if request.resolver_match.url_name == 'admin:index' %}active{% endif %}">
+                <img src="{% static 'assets/akun.png' %}" class="icon" alt="Admin" />
+                <span>Pengaturan Pengguna Akun</span>
+            </a>
+            {% endif %}
+            
+            {% if user.level >= 1 %}
+            <a href="{% url "home" %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                <img src="{% static 'assets/settings.png' %}" class="icon" alt="Pengaturan" />
+                Pengaturan
+            </a>
+            {% else %}
+            <a href="{% url "account_login" %}" class="nav-link {% if request.resolver_match.url_name == 'account_login' %}active{% endif %}">
+                <img src="{% static 'assets/akun.png' %}" class="icon" alt="Akun" />
+                Akun
+            </a>
+            {% endif %}
+        </div>
+        
+        <button id="toggleSidebar" class="toggle-btn">☰</button>
+        {% block content %}{% endblock content %}
+
+        <script>    
+        // Script untuk sidebar
+        const toggleBtn = document.getElementById('toggleSidebar');
+        const sidebar = document.getElementById('sidebar');
+        
+        if(toggleBtn && sidebar) {
+            const savedState = localStorage.getItem('sidebarState');
+
+            if (savedState === 'closed') {
+                sidebar.classList.add('closed');
+            }
+
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('closed');
+
+                if (sidebar.classList.contains('closed')) {
+                    localStorage.setItem('sidebarState', 'closed');
+                } else {
+                    localStorage.setItem('sidebarState', 'open');
+                }
+            });
+        }
+        </script>
+    </body>
+</html>

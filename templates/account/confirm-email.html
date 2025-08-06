@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Confirm E-mail Address" %}{% endblock %}
+
+{% block content %}
+<div class="shadow-wrap">
+    <div class="form-wrap" style="text-align: center;">
+        <h2 style="margin-bottom: 20px;">Verifikasi Alamat E-mail Anda</h2>
+
+        <p style="color: #545D7A; line-height: 1.6;">
+            {% blocktrans %}Kami telah mengirimkan sebuah e-mail kepada Anda untuk verifikasi. Silakan ikuti link yang ada di dalamnya untuk menyelesaikan proses pendaftaran.{% endblocktrans %}
+        </p>
+        <p style="color: #545D7A; margin-top: 15px; line-height: 1.6;">
+            {% blocktrans %}Jika Anda tidak melihat e-mail verifikasi di kotak masuk utama, mohon periksa folder spam Anda.{% endblocktrans %}
+        </p>
+
+        <a href="{% url 'account_login' %}" class="reset-pass" style="display: inline-block; text-decoration: none; margin-top: 30px; width: auto; padding: 12px 40px;">Kembali ke Login</a>
+    </div>
+</div>
+{% endblock %}
