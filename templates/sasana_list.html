@@ -19,7 +19,10 @@
                 <tr>
                     <th>No</th>
                     <th>Nama Sasana</th>
-                    <th>Sejak</th>
+                    <th>Alamat</th>
+                    
+                    <!-- <th>Sejak</th>
+                     <th>Wilayah</th> -->
                     <!-- <th>Alamat</th>
                     <th>Kelurahan</th>
                     <th>Kecamatan</th>
@@ -41,7 +44,8 @@
                 <tr>
                     <td>{{ forloop.counter }}</td>
                     <td>{{ s.nama_sasana }}</td>
-                    <td>{{ s.sejak }}</td>
+                    <td>{{ s.alamat_sasana }}</td>
+                    <!-- <td>{{ s.sejak }}</td> -->
                     <!-- <td>{{ s.alamat_sasana }}</td>
                     <td>{{ s.kelurahan }}</td>
                     <td>{{ s.kecamatan }}</td>
@@ -56,7 +60,7 @@
                     <td>{{ s.peserta_aktif }}</td>
                     <td>{{ s.jumlah_latihan_per_minggu }}</td> -->
                     <td>
-                        {% if user.level == 2 or user.level == 3 %}
+                        {% if user.level == 3 or user.level == 4 %}
                         <a href="{% url 'detail-sasana' s.id_sasana %}" class="btn btn-sm btn-info text-white">Lihat</a>
                         {% endif %}
 
@@ -65,8 +69,10 @@
                         <a href="{% url 'delete-sasana' s.id_sasana %}" class="btn btn-sm btn-danger">Hapus</a>
                         {% endif %}
 
-                        {% if user.level == 2 or user.level == 3 %}
+                        {% if user.level == 3 or user.level == 4 %}
+                        <a href= # class="btn btn-sm btn-success">Data Pengurus Sasana</a>
                         <a href="{% url 'list-instruktur' s.id_sasana %}" class="btn btn-sm btn-success">Data Instruktur</a>
+                        {% elif user.level == 3 %}
                         <a href="{% url 'list-peserta' s.id_sasana %}" class="btn btn-sm btn-success">Data Peserta</a>
                         {% endif %}
                     </td>
@@ -78,8 +84,10 @@
                 {% endfor %}
             </tbody>
         </table>
-        {% if user.level == 4 %}
+        {% if user.level == 3 or user.level == 4 %}
         <a href="{% url 'index' %}" class="btn btn-primary mt-3">Kembali ke Home</a>
+        {% endif %}
+        {% if user.level == 4 %}
         <a href="{% url 'create-sasana' %}" class="btn btn-primary mt-3">Tambah Data Baru</a>
         {% endif %}
     </div>

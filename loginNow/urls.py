@@ -35,7 +35,8 @@ urlpatterns = [
     path("toggle-dark-mode/", views.toggle_dark_mode, name='toggle_dark_mode'),
 
     # URL dari Bintang
-     path('sasana/', views.list_sasana, name='list-sasana'), 
+    path('sasana/', views.list_sasana, name='list-sasana'),
+    path('sasana/profil/', views.my_sasana_profile, name='my-sasana-profile'), 
     path('sasana/tambah/', views.create_sasana, name='create-sasana'),
     path('sasana/<uuid:id_sasana>/', views.detail_sasana, name='detail-sasana'),
     path('sasana/<uuid:id_sasana>/edit/', views.update_sasana, name='update-sasana'),
@@ -60,6 +61,7 @@ urlpatterns = [
     # URL Lainnya
     path('lokasi/', views.lokasi_view, name='lokasi'),
     path('analisa/', views.analisa_view, name='analisa'),
+    path('check_status/<str:job_id>/', views.check_status_view, name='check_status'),
     path('latihan/', views.latihan_view, name='latihan'),
     path('index/', views.index_view, name='index'),
 

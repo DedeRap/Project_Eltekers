@@ -30,11 +30,11 @@
                     <td>{{ s.nama_peserta }}</td>
                     <td>{{ s.tanggal_lahir_peserta }}</td>
                     <td>
-                        {% if user.level == 2 or user.level == 3 %}
+                        {% if user.level == 2 or user.level == 3 or user.level == 4 %}
                         <a href="{% url 'detail-peserta' s.id_peserta %}" class="btn btn-sm btn-info text-white">Lihat</a>
                         {% endif %}
                         
-                        {% if user.level >= 2 %}
+                        {% if user.level == 2 or user.level == 3 %}
                         <a href="{% url 'update-peserta' s.id_peserta %}" class="btn btn-sm btn-warning">Edit</a>
                         <a href="{% url 'delete-peserta' s.id_peserta %}" class="btn btn-sm btn-danger">Hapus</a>
                         {% endif %}
@@ -47,12 +47,14 @@
                 {% endfor %}
             </tbody>
         </table>
-        {% if user.level >= 2 %}
+        {% if user.level == 4 %}
         <a href="{% url 'list-sasana' %}" class="btn btn-primary mt-3">Kembali</a>
+        {% elif user.level == 3 %}
+        <a href="{% url 'my-sasana-profile' %}" class="btn btn-primary mt-3">Kembali</a>
+        <a href="{% url 'create-peserta' sasana.id_sasana %}" class="btn btn-primary mt-3">Tambah Data Baru</a>
         {% else %}
         <a href="{% url 'index' %}" class="btn btn-primary mt-3">Kembali ke Home</a>
         {% endif %}
-        <a href="{% url 'create-peserta' sasana.id_sasana %}" class="btn btn-primary mt-3">Tambah Data Baru</a>
     </div>
 </body>
 </html>

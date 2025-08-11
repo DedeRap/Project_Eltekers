@@ -12,7 +12,7 @@
         </div>
     </nav>
 
-    {% if user.level == 2 or user.level == 3%}
+    {% if user.level == 2 or user.level == 3 or user.level == 4 %}
     <div class="container mt-5">
         <h3 class="mb-4">Data Instruktur Tersimpan</h3>
         <table class="table table-bordered table-striped">
@@ -35,7 +35,7 @@
                     <td>{{ s.tanggal_sertifikasi }}</td>
                     <td>{{ s.file_sertifikat }}</td>
                     <td>
-                        {% if user.level == 2 or user.level == 3 %}
+                        {% if user.level == 2 or user.level == 3 or user.level == 4 %}
                         <a href="{% url 'detail-instruktur' s.id_instruktur %}" class="btn btn-sm btn-info text-white">Lihat</a>
                         {% endif %}
 
@@ -53,8 +53,10 @@
             </tbody>
         </table>
 
-        {% if user.level == 2 or user.level == 3%}
+        {% if user.level == 4 %}
         <a href="{% url 'list-sasana' %}" class="btn btn-primary mt-3">Kembali</a>
+        {% elif user.level == 3 %}
+        <a href="{% url 'my-sasana-profile' %}" class="btn btn-primary mt-3">Kembali</a>
         {% endif %}
 
         {% if user.level == 3 %}

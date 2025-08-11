@@ -16,7 +16,7 @@
         </div>
     </nav>
 
-    {% if user.level >= 3 %}
+    {% if user.level == 4 or user.level == 3 %}
     <div class="container mt-5 mb-5">
         <div class="card shadow-lg border-0">
             <div class="card-header text-white text-center" style="background-color: #0d47a1;">
@@ -96,7 +96,13 @@
                         <input type="hidden" name="g-recaptcha-response" id="id_g-recaptcha-response">
 
                         <button type="submit" class="btn btn-primary w-100 fw-bold">Simpan</button>
+                        {% if user.level == 4 %}
                         <a href="{% url 'list-sasana' %}" class="btn btn-secondary w-100 fw-bold">Kembali</a>
+                        {% elif user.level == 3 %}
+                        <a href="{% url 'my-sasana-profile' %}" class="btn btn-secondary w-100 fw-bold">Kembali</a>
+                        {% else %}
+                        <a href="{% url 'index' %}" class="btn btn-secondary w-100 fw-bold mt-2">Kembali ke Home</a>
+                        {% endif %}
                     </div>
                 </form>
             </div>

@@ -181,13 +181,25 @@
       </div>
       
       <div id="loadingIndicator" style="display: none; margin-top: 15px;">
-        <p><strong>Mengunggah dan menganalisis video... Mohon menunggu.</strong></p>
+        <p><strong>Mengirim video ke server... Mohon menunggu.</strong></p>
       </div>
     </form>
+
+
+    <div id="jobStatusContainer" style="display: none;">
+        <h5>Status Pemrosean Video</h5>
+        <p id="statusMessage">Memuat Status...</p>
+        <div id="videoResultContainer">
+          <h6>Hasil Analisis : </h6>
+          <video controls id="result-video"></video>
+          <br>
+          <a href="#" id="download-btn" class="btn btn-success mt-3">Unduh Video</a>
+        </div>
+    </div>
   </div>
   {% endif %}
 
-  <script>
+  <!-- <script>
     const videoInput = document.getElementById('videoUpload');
     const uploadForm = document.getElementById('uploadForm');
     const loadingIndicator = document.getElementById('loadingIndicator');
@@ -196,7 +208,7 @@
       videoInput.addEventListener('change', function() {
         if (this.files.length > 0) {
           // Tampilkan pesan file dipilih
-          console.log('Video dipilih:', this.files[0].name);
+          console.log('Video dipilih:', this.files[0].name, '- Memulai pengiriman...');
           
           // Indikator Loading
           loadingIndicator.style.display = 'block';
@@ -217,6 +229,78 @@
         sidebar.classList.toggle('closed');
       });
     }
+  </script> -->
+  <script>
+    const videoInput = document.getElementById('videoUpload');
+    const uploadForm = document.getElementById('uploadForm');
+    const jobStatusContainer = document.getElementById('jobStatusContainer');
+    const statusMessageElement = document.getElementById('statusMessage');
+    const videoResultContainer = document.getElementById('videoResultContainer');
+    const videoElement = document.getElementById('result-video');
+    const downloadButton = document.getElementById('download-btn');
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleSidebar');
+
+    // Logika pengiriman video
+    if (videoInput && uploadForm) {
+      videoInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+          uploadForm.submit();
+        }
+      });
+    }
+
+    // Logika sidebar
+    if(toggleBtn && sidebar) {
+      toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('closed');
+      });
+    }
+
+    // DAERAH PERUBAHAN UTAMA: Memeriksa dan memantau job yang sedang berjalan
+    function pollJobStatus() {
+      const jobId = localStorage.getItem('active_job_id');
+      if (!jobId) {
+        return; // Tidak ada job yang sedang berjalan
+      }
+
+      jobStatusContainer.style.display = 'block';
+      statusMessageElement.textContent = `Video Anda (Job ID: ${jobId}) sedang diproses...`;
+      
+      // URL API Anda di sini, sesuaikan jika perlu
+      const checkStatusUrl = `/check_status/${jobId}`;
+
+      const intervalId = setInterval(() => {
+        fetch(checkStatusUrl)
+          .then(response => response.json())
+          .then(data => {
+            statusMessageElement.textContent = `Status: ${data.status}`;
+            
+            if (data.status === 'completed') {
+              clearInterval(intervalId);
+              statusMessageElement.textContent = `Status: Selesai!`;
+              videoResultContainer.style.display = 'block';
+              videoElement.src = data.video_url;
+              downloadButton.href = data.video_url;
+              downloadButton.style.display = 'inline-block';
+              localStorage.removeItem('active_job_id'); // Hapus job dari localStorage
+            } else if (data.status === 'failed') {
+              clearInterval(intervalId);
+              statusMessageElement.textContent = `Error: ${data.error}`;
+              localStorage.removeItem('active_job_id');
+            }
+          })
+          .catch(err => {
+            console.error("Error fetching job status:", err);
+            clearInterval(intervalId);
+            statusMessageElement.textContent = `Error: Gagal memeriksa status.`;
+            localStorage.removeItem('active_job_id');
+          });
+      }, 5000); // Polling setiap 5 detik
+    }
+
+    // Panggil fungsi polling saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', pollJobStatus);
   </script>
   {% endblock %}
 </body>

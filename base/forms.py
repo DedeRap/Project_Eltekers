@@ -137,6 +137,7 @@ class SasanaForm(forms.ModelForm):
         
         widgets = {
             'nama_sasana': forms.TextInput(attrs={'class': 'form-control'}),
+            #'pengurus': forms.Select(attrs={'class': 'form-select'}),
             'sejak': forms.NumberInput(attrs={'class': 'form-control'}),
             'alamat_sasana': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'jumlah_instruktur': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -146,6 +147,22 @@ class SasanaForm(forms.ModelForm):
             'link_gmap': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://maps.app.goo.gl/abcdefg12345'}),
             'profile': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
+
+    #def __init__(self, *args, **kwargs):
+    #    super().__init__(*args, **kwargs)
+
+    #    pengurus_field = self.fields['pengurus']
+
+    #    pengurus_field.label = "Pilih Pengurus Sasana"
+
+    #    pengurus_field.queryset = User.objects.filter(level=3)
+
+    #    if not self.instance.pk:
+    #        existing_pengurus_ids = Sasana.objects.values_list('pengurus_id', flat=True)
+    #        pengurus_field.queryset = pengurus_field.queryset.exclude(id__in=existing_pengurus_ids)
+
+    #    pengurus_field.label_from_instance = lambda obj: f"{obj.username} ({obj.email or 'No Email'})"
+
 
 class PesertaForm(forms.ModelForm):
     class Meta:

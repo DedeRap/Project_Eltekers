@@ -75,6 +75,8 @@ AUTHENTICATION_BACKENDS = [
 
 RATELIMIT_BACKEND = 'database'
 
+MIDDLEWARE_URL = "http://127.0.0.1:8001" 
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -252,6 +254,6 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 MEDIA_URL = '/media/'
 
 # Path absolut ke folder tempat file media akan disimpan
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 AUTH_USER_MODEL = 'accounts.CustomUser'

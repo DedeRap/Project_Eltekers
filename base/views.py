@@ -482,16 +482,25 @@ def custom_500(request):
 #PERINGATAN!!! Jangan buat >= harus == jika dilakukan secara produksi.
 #Jika ini tidak segera ditangani, akan terjadinya broken access controll(OWASP A01:2021)
 def level_peserta(user):
-    return user.is_authenticated and user.level >= 1
+    return user.is_authenticated and user.level == 1
 
 def level_instruktur(user):
-    return user.is_authenticated and user.level >= 2
+    return user.is_authenticated and user.level == 2
 
 def level_pengurus_sasana(user):
-    return user.is_authenticated and user.level >= 3
+    return user.is_authenticated and user.level == 3
 
 def level_pengurus_daerah(user):
-    return user.is_authenticated and user.level >= 4
+    return user.is_authenticated and user.level == 4
+
+def level_pengurus_daerah_dan_instruktur(user):
+    return user.is_authenticated and user.level in [2, 4]
+
+def level_pengurus_daerah_dan_sasana(user):
+    return user.is_authenticated and user.level in [3, 4]
+
+def level_pengurus_daerah_sasana_dan_instruktur(user):
+    return user.is_authenticated and user.level in [2, 3, 4]
 
 
 # Dari Bintang:
@@ -530,24 +539,43 @@ def create_sasana(request):
     return render(request, 'sasana_form.html', context)
 
 # List Sasana
-@user_passes_test(level_pengurus_sasana)
+@user_passes_test(level_pengurus_daerah)
 @login_required
 def list_sasana(request):
     data = Sasana.objects.all()
     return render(request, 'sasana_list.html', {'data': data})
 
 # Detail Sasana
-@user_passes_test(level_pengurus_sasana)
+@user_passes_test(level_pengurus_daerah)
 @login_required
 def detail_sasana(request, id_sasana):
     sasana = get_object_or_404(Sasana, id_sasana=id_sasana)
     return render(request, 'sasana_detail.html', {'sasana': sasana})
 
+# Profil Sasana
+@login_required
+@user_passes_test(level_pengurus_sasana)
+def my_sasana_profile(request):
+    # Buat dictionary kosong untuk menampung konteks
+    context = {}
+    try:
+        # Cari sasana, jika ketemu, masukkan ke dalam context
+        sasana = Sasana.objects.get(pengurus=request.user)
+        context['sasana'] = sasana
+    except Sasana.DoesNotExist:
+        # Jika TIDAK KETEMU, masukkan pesan error ke dalam context
+        context['pesan_error'] = "Maaf, akun Anda belum terdaftar di sasana manapun. Silakan lapor kepada Pengurus Daerah untuk mengelola data sasana anda."
+        # Pastikan 'sasana' tidak ada di context atau nilainya None
+        context['sasana'] = None
+    
+    # Render template dengan context yang sudah disiapkan
+    return render(request, 'profile_sasana.html', context)
+
 # Edit Sasana
 @user_passes_test(level_pengurus_sasana)
 @login_required
 def update_sasana(request, id_sasana):
-    sasana = get_object_or_404(Sasana, id_sasana=id_sasana)
+    sasana = get_object_or_404(Sasana, id_sasana=id_sasana, pengurus=request.user)
 
     if request.method == 'POST':
         form = SasanaForm(request.POST, request.FILES, instance=sasana)
@@ -566,7 +594,7 @@ def update_sasana(request, id_sasana):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Data sasana berhasil diubah!')
-                return redirect('list-sasana')
+                return redirect('my-sasana-profile')
         else:
             messages.error(request, 'Gagal menyimpan, terdeteksi adanya aktivitas mencurigakan.')
             
@@ -583,10 +611,11 @@ def update_sasana(request, id_sasana):
 @user_passes_test(level_pengurus_sasana)
 @login_required
 def delete_sasana(request, id_sasana):
-    sasana = get_object_or_404(Sasana, id_sasana=id_sasana)
+    sasana = get_object_or_404(Sasana, id_sasana=id_sasana, pengurus=request.user)
     if request.method == 'POST':
         sasana.delete()
-        return redirect('list-sasana')
+        messages.success(request, 'Data sasana telah berhasil dihapus.')
+        return redirect('home')
     return render(request, 'sasana_confirm_delete.html', {'sasana': sasana})
 
 
@@ -650,7 +679,7 @@ def create_peserta(request, sasana_id):
     return render(request, 'peserta_form.html', context)
 
 # List Peserta
-@user_passes_test(level_pengurus_sasana)
+@user_passes_test(level_pengurus_daerah_sasana_dan_instruktur)
 @login_required
 def list_peserta(request, sasana_id):
     sasana = get_object_or_404(Sasana, id_sasana=sasana_id)
@@ -658,7 +687,7 @@ def list_peserta(request, sasana_id):
     return render(request, 'peserta_list.html', {'data': data, 'sasana': sasana})
 
 # Detail Peserta
-@user_passes_test(level_pengurus_sasana)
+@user_passes_test(level_pengurus_daerah_sasana_dan_instruktur)
 @login_required
 def detail_peserta(request, id_peserta):
     peserta = get_object_or_404(Peserta, id_peserta=id_peserta)
@@ -760,7 +789,7 @@ def create_instruktur(request, sasana_id):
     return render(request, 'instruktur_form.html', context)
 
 # List Instruktur
-@user_passes_test(level_pengurus_sasana)
+@user_passes_test(level_pengurus_daerah_dan_sasana)
 @login_required
 def list_instruktur(request, sasana_id):
     sasana = get_object_or_404(Sasana, id_sasana=sasana_id)
@@ -768,12 +797,13 @@ def list_instruktur(request, sasana_id):
     return render(request, 'instruktur_list.html', {'data': data, 'sasana': sasana})
 
 # Detail Instruktur
-@user_passes_test(level_pengurus_sasana)
+@user_passes_test(level_pengurus_daerah_dan_sasana)
 @login_required
 def detail_instruktur(request, id_instruktur):
     instruktur = get_object_or_404(Instruktur, id_instruktur=id_instruktur)
     return render(request, 'instruktur_detail.html', {'instruktur': instruktur})
 
+# Update Instruktur
 @user_passes_test(level_pengurus_sasana)
 @login_required
 def update_instruktur(request, id_instruktur):
@@ -839,51 +869,74 @@ def pengaturan_view(request):
     return render(request, 'widgets/pengaturan.html')
 
 #Untuk bang Anka, templates dari Reza:
-# URL middleware Anda tetap sama
-MIDDLEWARE_URL = "http://127.0.0.1:8001/predict_activity/"
 
-# Gunakan fungsi view yang sudah Anda buat
+@login_required
+@user_passes_test(lambda u: u.level >= 2) # Pastikan hanya level yang sesuai bisa akses
 def analisa_view(request):
     if request.method == 'POST':
-        # Pastikan ada file yang diunggah dengan nama 'video_file'
         if 'video_file' not in request.FILES:
-            error_message = "Tidak ada file video yang dipilih."
-            return render(request, 'video_processor/analisa.html', {'error_message': error_message})
-
+            return render(request, 'video_processor/analisa.html', {'error_message': 'Tidak ada file video yang dipilih.'})
+        
         uploaded_file = request.FILES['video_file']
         
-        # File yang akan dikirim ke middleware
-        files = {'video_file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)}
-        
         try:
-            # Kirim request ke API middleware
-            response = requests.post(MIDDLEWARE_URL, files=files, timeout=300.0)
-            response.raise_for_status() # Akan raise error jika status 4xx atau 5xx
+            # Menggunakan URL dari settings.py
+            submit_url = f"{settings.MIDDLEWARE_URL}/submit_video/"
+            
+            files = {'video_file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)}
 
-            # Simpan video hasil dari middleware ke folder media Django
+            # Kirim request ke API middleware
+            response = requests.post(submit_url, files=files, timeout=30)
+            response.raise_for_status()
+            
+            data = response.json()
+            job_id = data.get('job_id')
+
+            if not job_id:
+                 return render(request, 'video_processor/analisa.html', {'error_message': 'Gagal mendapatkan Job ID dari middleware.'})
+
+            # Arahkan ke halaman tunggu dengan job_id
+            return render(request, 'video_processor/result.html', {'job_id': job_id})
+
+        except requests.exceptions.RequestException as e:
+            error_message = f"Gagal terhubung ke layanan pemrosesan video. Silakan coba lagi nanti. Error: {e}"
+            return render(request, 'video_processor/analisa.html', {'error_message': error_message})
+        except Exception as e:
+            return render(request, 'video_processor/analisa.html', {'error_message': f"Terjadi kesalahan: {e}"})
+
+    # Jika method GET, tampilkan halaman upload
+    return render(request, 'video_processor/analisa.html')
+
+
+@login_required
+def check_status_view(request, job_id):
+    """
+    View ini dipanggil oleh JavaScript untuk memeriksa status job.
+    """
+    try:
+        status_url = f"{settings.MIDDLEWARE_URL}/get_result/{job_id}"
+        response = requests.get(status_url, timeout=10)
+        response.raise_for_status()
+        
+        if response.headers.get('content-type') == 'video/mp4':
             fs = FileSystemStorage()
-            output_filename = f"annotated_{uploaded_file.name}"
+            output_filename = f"annotated_{job_id}.mp4"
+            # Pastikan direktori media ada
+            if not os.path.exists(settings.MEDIA_ROOT):
+                os.makedirs(settings.MEDIA_ROOT)
             
             with open(os.path.join(settings.MEDIA_ROOT, output_filename), 'wb') as f:
                 f.write(response.content)
             
-            output_video_url = fs.url(output_filename)
-            
-            # Tampilkan halaman hasil dengan video
-            return render(request, 'video_processor/result.html', {
-                'processed_video_url': output_video_url
-            })
+            video_url = fs.url(output_filename)
+            return JsonResponse({'status': 'completed', 'video_url': video_url})
+        
+        return JsonResponse(response.json())
 
-        except requests.exceptions.RequestException as e:
-            error_message = "Gagal terhubung ke layanan pemrosesan video. Silakan coba lagi nanti."
-            return render(request, 'video_processor/analisa.html', {'error_message': error_message})
-        except Exception as e:
-            error_message = f"Terjadi kesalahan: {e}"
-            return render(request, 'video_processor/analisa.html', {'error_message': error_message})
-
-    # Jika metodenya GET, cukup tampilkan halaman upload
-    else:
-        return render(request, 'video_processor/analisa.html')
+    except requests.exceptions.RequestException:
+        return JsonResponse({'status': 'failed', 'error': 'Gagal menghubungi middleware.'}, status=500)
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
     
 # Dari Bu Binti:
 def input_sasana(request):

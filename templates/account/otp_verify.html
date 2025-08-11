@@ -57,13 +57,13 @@
   </div>
 </div>
 
-<script src="https://www.google.com/recaptcha/api.js?render={{ site_key_v3 }}"></script>
+<script src="https://www.google.com/recaptcha/api.js?render=6LeqyWwrAAAAADzlgg0ebCj9kIldvP0FYTV1_keG"></script>
 <script>
     // Pastikan skrip menargetkan form dengan id="otpForm"
     document.getElementById('otpForm').addEventListener('submit', function(e) {
         e.preventDefault();
         grecaptcha.ready(function() {
-            grecaptcha.execute('{{ site_key_v3 }}', {action: 'otp_verify'}).then(function(token) {
+            grecaptcha.execute('6LeqyWwrAAAAADzlgg0ebCj9kIldvP0FYTV1_keG', {action: 'otp_verify'}).then(function(token) {
                 document.getElementById('id_g-recaptcha-response').value = token;
                 document.getElementById('otpForm').submit();
             });

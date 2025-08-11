@@ -27,7 +27,7 @@
                 Lokasi Sasana
             </a>
             
-            {% if user.level >= 3 %}
+            {% if user.level >= 2 %}
             <a href="{% url "analisa" %}" class="nav-link {% if request.resolver_match.url_name == 'analisa' %}active{% endif %}">
                 <img src="{% static 'assets/yoga.png' %}" class="icon" alt="Analisa" />
                 <span>Analisa Gerakan</span>
@@ -43,13 +43,33 @@
             {% endif %}
             
             {% if user.level == 3 %}
-            <a href="{% url "list-sasana" %}" class="nav-link {% if request.resolver_match.url_name == 'list-sasana' %}active{% endif %}">
+            <a href="{% url "my-sasana-profile" %}" class="nav-link {% if request.resolver_match.url_name == 'my-sasana-profile' %}active{% endif %}">
+                <img src="{% static 'assets/kelola_data.png' %}" class="icon" alt="Data" />
+                <span>Kelola Data</span>
+            </a>
+            {% elif user.level == 2 %}
+            <a href="#" class="nav-link {% if request.resolver_match.url_name == '#' %}active{% endif %}">
                 <img src="{% static 'assets/kelola_data.png' %}" class="icon" alt="Data" />
                 <span>Kelola Data</span>
             </a>
             {% endif %}
 
-            {% if user.level == 4 or user.level == 5 %}
+            {% if user.level == 1 %}
+            <a href="#" class="nav-link {% if request.resolver_match.url_name == '#' %}active{% endif %}">
+                <img src="{% static 'assets/checklist.png' %}" class="icon" alt="Data" />
+                <span>Absensi</span>
+            </a>
+            {% endif %}
+
+            {% if user.level == 4 %}
+            <a href="{% url "list-sasana" %}" class="nav-link {% if request.resolver_match.url_name == 'list-sasana' %}active{% endif %}">
+                <img src="{% static 'assets/lihat_data.png' %}" class="icon" alt="Data" />
+                <span>Lihat Data</span>
+            </a>
+            {% endif %}
+            
+
+            {% if user.level == 4 %}
             <a href="{% url "create-sasana" %}" class="nav-link {% if request.resolver_match.url_name == 'create-sasana' %}active{% endif %}">
                 <img src="{% static 'assets/kelola_data.png' %}" class="icon" alt="Data" />
                 <span>Tambah/Membuat Data</span>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Memproses Video...</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        #status { font-size: 1.2em; }
+        #video-container { display: none; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Mohon Tunggu, Video Anda Sedang Diproses</h1>
+    <p id="status">Status: Waiting</p>
+    <!-- <div id="video-container">
+        <h2>Hasil Analisis:</h2>
+        <video id="result-video" width="640" height="480" controls></video>
+    </div> -->
+    <a href="{% url 'index' %}" class="btn btn-primary mt-3">Kembali ke Home</a>
+
+    <!-- <script>
+    const jobId = "{{ job_id }}";
+    const statusElement = document.getElementById('status');
+    const videoContainer = document.getElementById('video-container');
+    const videoElement = document.getElementById('result-video');
+    const checkStatusUrlTemplate = "{% url 'check_status' 'JOB_ID_PLACEHOLDER' %}";
+
+    function checkStatus() {
+        // Ganti placeholder dengan job_id yang sebenarnya
+        const finalCheckUrl = checkStatusUrlTemplate.replace('JOB_ID_PLACEHOLDER', jobId);
+        
+        // Gunakan URL yang sudah benar untuk fetch
+        fetch(finalCheckUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                statusElement.textContent = `Status: ${data.status}`;
+                
+                if (data.status === 'completed') {
+                    clearInterval(intervalId);
+                    statusElement.textContent = "Status: Selesai!";
+                    videoElement.src = data.video_url;
+                    videoContainer.style.display = 'block';
+                } else if (data.status === 'failed') {
+                    clearInterval(intervalId);
+                    statusElement.textContent = `Error: ${data.error}`;
+                }
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                statusElement.textContent = "Error: Gagal memeriksa status. Coba refresh halaman.";
+                clearInterval(intervalId);
+            });
+    }
+
+    // Logika interval tetap sama
+    const intervalId = setInterval(checkStatus, 5000);
+    checkStatus(); // Panggil pertama kali
+</script> -->
+<script>
+    const jobId = "{{ job_id }}"
+    // Menyimpan job_id aktif ke dalam "localStorage" yang dimiliki browser
+    localStorage.setItem('active_job_id', jobId);
+</script>
+
+</body>
+</html>

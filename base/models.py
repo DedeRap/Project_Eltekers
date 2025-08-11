@@ -54,6 +54,7 @@ class PengurusSasana(models.Model):
 class Sasana(models.Model):
     id_sasana = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nama_sasana = models.CharField(max_length=255)
+    #pengurus = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'level': 3}, verbose_name="Pengurus Sasana")
     sejak = models.IntegerField()
     alamat_sasana = models.TextField()
     provinsi = models.CharField(max_length=255)
@@ -80,6 +81,7 @@ class JadwalLatihan(models.Model):
 
 class Instruktur(models.Model):
     id_instruktur = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    #nama_instruktur = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'level': 2}, verbose_name="Instruktur")
     nama_instruktur = models.CharField(max_length=255)
     sertifikasi = models.BooleanField()
     tanggal_sertifikasi = models.DateField()
