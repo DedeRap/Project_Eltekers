@@ -161,7 +161,7 @@ class SasanaForm(forms.ModelForm):
     #        existing_pengurus_ids = Sasana.objects.values_list('pengurus_id', flat=True)
     #        pengurus_field.queryset = pengurus_field.queryset.exclude(id__in=existing_pengurus_ids)
 
-    #    pengurus_field.label_from_instance = lambda obj: f"{obj.username} ({obj.email or 'No Email'})"
+    #    pengurus_field.label_from_instance = lambda obj: f"{obj.username} ({obj.email or 'Tidak ada Email'})"
 
 
 class PesertaForm(forms.ModelForm):

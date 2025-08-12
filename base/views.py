@@ -962,6 +962,12 @@ def haversine(lat1, lon1, lat2, lon2):
     return c * r
 
 def extract_lat_lon(link):
+    # ==================================================================
+    # Daerah penambahan
+    if not link:
+        return None, None
+    # ==================================================================
+
     match = re.search(r'@(-?\d+\.\d+),(-?\d+\.\d+)', link)
     if match:
         return float(match.group(1)), float(match.group(2))
@@ -972,7 +978,10 @@ def cari_sasana_terdekat(request):
         lat = float(request.POST.get('latitude'))
         lon = float(request.POST.get('longitude'))
 
-        semua_sasana = Sasana.objects.all()
+        # ===============================================
+        # DAERAH PERUBAHAN!
+        #semua_sasana = Sasana.objects.all()
+        semua_sasana = Sasana.objects.exclude(link_gmap__isnull=True).exclude(link_gmap__exact='')
         hasil = []
 
         for s in semua_sasana:

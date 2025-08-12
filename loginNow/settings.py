@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'base',
     'accounts',
     'video_processor',
+    'event',
 ]
 
 SITE_ID = 1

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Detail Event: {{ event.name }}</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: auto; border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
+        img { max-width: 100%; height: auto; border: 1px solid #eee; }
+        a { display: inline-block; margin-top: 20px; text-decoration: none; background-color: #007bff; color: white; padding: 10px 15px; border-radius: 5px;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ event.name }}</h1>
+        <p><strong>Tanggal:</strong> {{ event.date }}</p>
+
+        <hr>
+
+        <h3>Kode QR Absensi</h3>
+        <p>Instruktur dapat menampilkan atau menyimpan gambar ini untuk dipindai oleh peserta.</p>
+
+        {% if event.qr_code %}
+            <img src="{{ event.qr_code.url }}" alt="QR Code untuk {{ event.name }}">
+            <br>
+            <a href="{{ event.qr_code.url }}" download="qr-{{event.name}}.png">Simpan Gambar QR Code</a>
+        {% else %}
+            <p>QR Code sedang dibuat atau tidak tersedia.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

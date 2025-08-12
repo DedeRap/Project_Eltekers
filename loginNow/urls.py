@@ -64,6 +64,7 @@ urlpatterns = [
     path('check_status/<str:job_id>/', views.check_status_view, name='check_status'),
     path('latihan/', views.latihan_view, name='latihan'),
     path('index/', views.index_view, name='index'),
+    path('event/', include('event.urls')),
 
 ] 
 

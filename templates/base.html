@@ -22,8 +22,8 @@
                 <span>Home</span>
             </a>
             
-            <a href="{% url "lokasi" %}" class="nav-link {% if request.resolver_match.url_name == 'lokasi' %}active{% endif %}">
-                <img src="{% static 'assets/location.png' %}" class="icon" alt="Lokasi" />
+            <a href="{% url "cari_sasana_terdekat" %}" class="nav-link {% if request.resolver_match.url_name == 'cari_sasana_terdekat' %}active{% endif %}">
+                <img src="{% static 'assets/location.png' %}" class="icon" alt="cari_sasana_terdekat" />
                 Lokasi Sasana
             </a>
             
