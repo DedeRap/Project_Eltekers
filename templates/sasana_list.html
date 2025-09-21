@@ -64,15 +64,18 @@
                         <a href="{% url 'detail-sasana' s.id_sasana %}" class="btn btn-sm btn-info text-white">Lihat</a>
                         {% endif %}
 
-                        {% if user.level == 3 %}
+                        {% if user.level == 4 %}
                         <a href="{% url 'update-sasana' s.id_sasana %}" class="btn btn-sm btn-warning">Edit</a>
                         <a href="{% url 'delete-sasana' s.id_sasana %}" class="btn btn-sm btn-danger">Hapus</a>
                         {% endif %}
 
-                        {% if user.level == 3 or user.level == 4 %}
-                        <a href= # class="btn btn-sm btn-success">Data Pengurus Sasana</a>
+                        {% if user.level == 4 %}
+                        <a href="{% url 'list-pengurus' s.id_sasana %}" class="btn btn-sm btn-success">Data Pengurus Sasana</a>
+                        {% endif %}
+                        {% if user.level == 3 or user.level == 4 or user.level == 2 %}
                         <a href="{% url 'list-instruktur' s.id_sasana %}" class="btn btn-sm btn-success">Data Instruktur</a>
-                        {% elif user.level == 3 %}
+                        {% endif %}
+                        {% if user.level == 3 or user.level == 2 %}
                         <a href="{% url 'list-peserta' s.id_sasana %}" class="btn btn-sm btn-success">Data Peserta</a>
                         {% endif %}
                     </td>
@@ -84,7 +87,7 @@
                 {% endfor %}
             </tbody>
         </table>
-        {% if user.level == 3 or user.level == 4 %}
+        {% if user.level >= 2 %}
         <a href="{% url 'index' %}" class="btn btn-primary mt-3">Kembali ke Home</a>
         {% endif %}
         {% if user.level == 4 %}

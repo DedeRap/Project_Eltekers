@@ -27,7 +27,7 @@
                 Lokasi Sasana
             </a>
             
-            {% if user.level >= 2 %}
+            {% if user.level == 2 %}
             <a href="{% url "analisa" %}" class="nav-link {% if request.resolver_match.url_name == 'analisa' %}active{% endif %}">
                 <img src="{% static 'assets/yoga.png' %}" class="icon" alt="Analisa" />
                 <span>Analisa Gerakan</span>
@@ -48,16 +48,9 @@
                 <span>Kelola Data</span>
             </a>
             {% elif user.level == 2 %}
-            <a href="#" class="nav-link {% if request.resolver_match.url_name == '#' %}active{% endif %}">
+            <a href="{% url "my-instruktur-profile" %}" class="nav-link {% if request.resolver_match.url_name == 'my-instruktur-profile' %}active{% endif %}">
                 <img src="{% static 'assets/kelola_data.png' %}" class="icon" alt="Data" />
                 <span>Kelola Data</span>
-            </a>
-            {% endif %}
-
-            {% if user.level == 1 %}
-            <a href="#" class="nav-link {% if request.resolver_match.url_name == '#' %}active{% endif %}">
-                <img src="{% static 'assets/checklist.png' %}" class="icon" alt="Data" />
-                <span>Absensi</span>
             </a>
             {% endif %}
 
@@ -67,7 +60,13 @@
                 <span>Lihat Data</span>
             </a>
             {% endif %}
-            
+
+            {% if user.level == 1 %}
+            <a href="{% url "my-peserta-profile" %}" class="nav-link {% if request.resolver_match.url_name == 'my-peserta-profile' %}active{% endif %}">
+                <img src="{% static 'assets/lihat_data.png' %}" class="icon" alt="Data" />
+                <span>Informasi Latihan</span>
+            </a>
+            {% endif %}
 
             {% if user.level == 4 %}
             <a href="{% url "create-sasana" %}" class="nav-link {% if request.resolver_match.url_name == 'create-sasana' %}active{% endif %}">
@@ -82,6 +81,15 @@
                 <span>Pengaturan Pengguna Akun</span>
             </a>
             {% endif %}
+
+            {% comment %}
+            {% if user.level == 1 %}
+            <a href="#" class="nav-link {% if request.resolver_match.url_name == '#' %}active{% endif %}">
+                <img src="{% static 'assets/checklist.png' %}" class="icon" alt="Data" />
+                <span>Absensi</span>
+            </a>
+            {% endif %}
+            {% endcomment %}
             
             {% if user.level >= 1 %}
             <a href="{% url "home" %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">

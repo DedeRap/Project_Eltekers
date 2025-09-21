@@ -1,6 +1,8 @@
 from django.db import models
+from django.db.models.signals import post_delete
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import User
+from django.dispatch import receiver
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
 import uuid
@@ -45,12 +47,6 @@ class PengurusDaerah(models.Model):
     jabatan = models.CharField(max_length=255)
 #    organisasi_daerah = models.ForeignKey(OrganisasiDaerah, on_delete=models.CASCADE)
 
-class PengurusSasana(models.Model):
-#    id_sasana = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    id_pengurus_sasana = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    nama_pengurus_sasana = models.CharField(max_length=255)
-    no_telp_pengurus_sasana = models.CharField(max_length=20)
-
 class Sasana(models.Model):
     id_sasana = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nama_sasana = models.CharField(max_length=255)
@@ -79,29 +75,50 @@ class JadwalLatihan(models.Model):
     jam_latihan = models.TimeField()
 #    sasana = models.ForeignKey(Sasana, on_delete=models.CASCADE)
 
-class Instruktur(models.Model):
-    id_instruktur = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    #nama_instruktur = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'level': 2}, verbose_name="Instruktur")
-    nama_instruktur = models.CharField(max_length=255)
-    sertifikasi = models.BooleanField()
-    tanggal_sertifikasi = models.DateField()
-    file_sertifikat = models.FileField()
-
-    sasana = models.ForeignKey(Sasana, on_delete=models.CASCADE, null=True)
-
-    def __str__(self):
-        return self.nama_instruktur
-
 class Peserta(models.Model):
     id_peserta = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    nama_peserta = models.CharField(max_length=255)
+    # nama_peserta = models.CharField(max_length=255)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Peserta (Akun Pengguna)", limit_choices_to={'level':1})
     tanggal_lahir_peserta = models.DateField()
     kendala_terapi = models.TextField()
-
     sasana = models.ForeignKey(Sasana, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.nama_peserta
+
+class Instruktur(models.Model):
+    id_instruktur = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    #peserta = models.OneToOneField(Peserta, on_delete=models.CASCADE, null=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'level__in': [1, 2]})
+    # sertifikasi = models.BooleanField()
+    tanggal_sertifikasi = models.DateField(null=True, blank=True)
+    file_sertifikat = models.FileField(upload_to='sertifikat_instruktur/', null=True, blank=True, validators=[FileExtensionValidator(allowed_extensions=['pdf','png','jpg'])], help_text="Format yang diizinkan hanya PDF, PNG, dan JPG. Ukuran file maksimal 5MB.")
+    sasana = models.ForeignKey(Sasana, on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        return self.user.username
+    
+@receiver(post_delete, sender=Instruktur)
+def demote_user_on_instructor_delete(sender, instance, **kwargs):
+    user_to_demote = instance.user
+    user_to_demote.level = 1
+    user_to_demote.save()
+
+    Peserta.objects.create(user=user_to_demote, sasana=instance.sasana, tanggal_lahir_peserta='1000-01-01', kendala_terapi = 'Butuh diperbaiki.')
+
+    print(f"PENGGUNA: {user_to_demote.username} telah dikembalikan menjadi Peserta.")
+    
+class PengurusSasana(models.Model):
+    id_pengurus = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    #peserta = models.OneToOneField(Peserta, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Pengurus (Akun Pengguna)", limit_choices_to={'level': 3})
+    # no_telp_pengurus_sasana = models.CharField(max_length=20)
+    jabatan = models.CharField(max_length=100)
+    sasana = models.ForeignKey(Sasana, on_delete=models.CASCADE, related_name='pengurus_sasana')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.jabatan} di {self.sasana.nama_sasana}"
 
 class Peraga(models.Model):
     id_peraga = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -149,7 +166,8 @@ class Kabupaten(models.Model):
         return self.nama
     
 class Kecamatan(models.Model):
-    id = models.IntegerField(Kabupaten, primary_key=True)
+    id = models.IntegerField(primary_key=True)
+    kabupaten = models.ForeignKey(Kabupaten, on_delete=models.CASCADE)
     nama = models.CharField(max_length=255)
 
     def __str__(self):
@@ -157,7 +175,7 @@ class Kecamatan(models.Model):
 
 class Kelurahan(models.Model):
     id = models.IntegerField(primary_key=True)
-    provinsi = models.ForeignKey(Kecamatan, on_delete=models.CASCADE)
+    kecamatan = models.ForeignKey(Kecamatan, on_delete=models.CASCADE)
     nama = models.CharField(max_length=255)
 
     def __str__(self):

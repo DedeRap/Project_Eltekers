@@ -33,7 +33,13 @@ from django.urls import reverse
 from django.http import HttpResponseForbidden
 from allauth.account.utils import send_email_confirmation
 from django.contrib.auth.views import redirect_to_login
+from .decorators import ( user_is_authorized_for_sasana, user_is_authorized_for_pengurus_daerah_sasana_dan_instruktur, user_is_authorized_for_pengurus_sasana_dan_instruktur, 
+                         user_is_authorized_for_pengurus, user_is_authorized_for_instruktur_detail, user_is_authorized_for_pengurus_sasana_data_instruktur, 
+                         user_is_authorized_for_pengurus_sasana_edit_instruktur, user_is_authorized_for_Peserta_with_id)
 from .forms import *
+import json
+import hmac
+import hashlib
 from django.db.models import Q
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
@@ -42,10 +48,10 @@ from django.shortcuts import resolve_url
 from django.contrib.auth import get_user_model
 from .forms import ProfileForm
 from .forms import CustomLoginForm
-from .forms import CustomUserCreationForm # Pastikan path import ini benar
+from .forms import CustomUserCreationForm 
 #Dari Bintang:
-from .forms import SasanaForm, PesertaForm, InstrukturForm
-from .models import Sasana, Instruktur, Peserta
+from .forms import SasanaForm, PesertaForm, InstrukturForm, PengurusSasanaForm
+from .models import Sasana, Instruktur, Peserta, PengurusSasana
 #Dari bang Anka:
 import os
 from django.core.files.storage import FileSystemStorage
@@ -98,13 +104,58 @@ class CustomLoginView(LoginView):
     template_name = 'account/login.html'
     form_class = CustomLoginForm  # <-- INI BAGIAN KUNCINYA!  
 
+def kirim_otp_via_whatsapp(nomor_telepon, otp):
+    if nomor_telepon.startswith('0'):
+        nomor_telepon = '62' + nomor_telepon[1:]
+    elif nomor_telepon.startswith('+'):
+        nomor_telepon = nomor_telepon[1:]
+
+    endpoint = "https://tegal.wablas.com/api/send-message"
+    pesan = f"Kode verifikasi Anda adalah: *{otp}*. Mohon jangan berikan kode ini kepada siapapun! Terima kasih."
+
+    # Payload digunakan untuk pengiriman pesan WA
+    payload = {
+        'phone': nomor_telepon,
+        'message': pesan,
+    }
+
+    secret_key = settings.WA_SECRET_TOKEN.encode('utf-8')
+
+    payload_string = json.dumps(payload, separators=(',',':'))
+
+    signature = hmac.new(secret_key, payload_string.encode('utf-8'), hashlib.sha256).hexdigest()
+
+    # Header untuk otentikasi
+    headers = {
+        'Authorization': settings.WA_API_TOKEN,
+        'Content-Type': 'application/json',
+        'X-Signature': signature
+    }
+
+    try:
+        response = requests.post(endpoint, data=payload_string, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        response_json = response.json()
+
+        print("========================================")
+        print(f"MENGIRIM OTP VIA WHATSAPP KE: {nomor_telepon}")
+        print(f"SIGNATURE DIKIRIM: {signature}")
+        print(f"RESPONS API WABLAS: {response_json}")
+        print("========================================")
+
+        if response_json.get('status') is True:
+            return True
+        else:
+            print(f"ERROR DARI WABLAS: {response_json.get('message')}")
+            return False
+        
+    except requests.exceptions.RequestException as e:
+        print(f"ERROR saat menghubungi WAblas: {e}")
+        return False
+    
 def kirim_otp_via_sms(nomor_telepon, otp):
-    # Di sinilah Anda akan menempatkan kode untuk memanggil API gateway SMS/WA
-    # Contoh:
-    # endpoint = "https://api.provider.com/send"
-    # payload = {'to': nomor_telepon, 'message': f'Kode OTP Anda: {otp}'}
-    # headers = {'Authorization': 'Bearer YOUR_API_KEY'}
-    # requests.post(endpoint, json=payload, headers=headers)
+    # Ini hanya untuk DEBUG saja.
     print("========================================")
     print(f"SIMULASI MENGIRIM OTP KE: {nomor_telepon}")
     print(f"KODE OTP: {otp}")
@@ -125,7 +176,9 @@ def request_password_reset_otp(request):
                 # Simpan informasi di session
                 request.session['reset_otp'] = otp
                 request.session['reset_otp_user_id'] = user.id
-                # Tambahkan waktu kedaluwarsa jika perlu
+                # Tambahkan waktu kedaluwarsa
+                request.session['reset_otp_created_time'] = timezone.now().isoformat()
+                request.session['reset_otp_attempts'] = 0
                 
                 # Kirim OTP
                 kirim_otp_via_sms(user.nomor_telepon, otp)
@@ -141,22 +194,76 @@ def request_password_reset_otp(request):
         
     return render(request, 'account/password_reset_request_form.html', {'form': form})
 
-def verify_password_reset_otp(request):
-    if 'reset_otp_user_id' not in request.session:
-        messages.error(request, 'Sesi tidak valid. Mohon ulangi permintaan reset password.')
-        return redirect('password_reset_request')
+def resend_password_reset_otp(request):
+    user_id = request.session.get("reset_otp_user_id")
+    if not user_id:
+        messages.error(request, "Sesi tidak valid untuk mengirim ulang OTP.")
+        return redirect("password_reset_request")
+    
+    try:
+        user = User.objects.get(id=user_id)
+        otp = str(random.randint(100000, 999999))
 
-    if request.method == 'POST':
-        input_otp = request.POST.get('otp')
-        if input_otp == request.session.get('reset_otp'):
-            # OTP Benar, tandai sesi sebagai terverifikasi
-            request.session['reset_otp_verified'] = True
-            messages.success(request, 'OTP benar. Silakan atur password baru Anda.')
-            return redirect('password_reset_set_new') # Arahkan ke halaman set password baru
+        request.session['reset_otp'] = otp
+        request.session['reset_otp_created_time'] = timezone.now().isoformat()
+        request.session['reset_otp_attempts'] = 0
+
+        # jika diupdate ke server pakai kirim_otp_via_whatsapp
+        if kirim_otp_via_sms(user.nomor_telepon, otp):
+            messages.success(request, "Kode OTP baru telah dikirim ulang ke nomor WhatsApp Anda.")
         else:
-            messages.error(request, 'Kode OTP salah.')
+            messages.error(request, "Gagal mengirim ulang OTP. Silahkan coba lagi nanti.")
+
+        return redirect("password_reset_otp_verify")
+    
+    except User.DoesNotExist:
+        messages.error(request, "Pengguna tidak ditemukan. Sesi Rusak!")
+        return redirect("password_reset_request")
+    
+def verify_password_reset_otp(request):
+    otp_time_str = request.session.get("reset_otp_created_time")
+    user_id = request.session.get('reset_otp_user_id')
+
+    if not otp_time_str or not user_id:
+        messages.error(request, "Sesi tidak valid. Mohon lakukan permintaan reset password ulang.")
+        return redirect('password_reset_request')
+    
+    otp_time = timezone.datetime.fromisoformat(otp_time_str)
+    expiry_time = otp_time + timedelta(minutes=5)
+    expiry_timestamp = int(expiry_time.timestamp() * 1000)
+
+    if request.method == "POST":
+        if timezone.now() > expiry_time:
+            for key in list(request.session.keys()):
+                if key.startswith('reset_otp'):
+                    del request.session[key]
+            messages.error(request, "OTP sudah kadaluarsa. Mohon lakukan permintaan reset password ulang.")
+            return redirect('password_reset_request')
+        
+        input_otp = request.POST.get("otp")
+
+        if input_otp == request.session.get("reset_otp"):
+            request.session['reset_otp_verified'] = True
+            messages.success(request, 'OTP benar. Silahkan atur password baru Anda.')
+            return redirect('password_reset_set_new')
+        else:
+            attempts = request.session.get('reset_otp_attempts', 0) + 1
+            request.session['reset_otp_attempts'] = attempts
+
+            if attempts >= 5:
+                for key in list(request.session.keys()):
+                    if key.startswith('reset_otp'):
+                        del request.session[key]
+                messages.error(request, "Terlalu banyak percobaan OTP yang salah. Permintaan reset password dibatalkan!")
+                return redirect('password_reset_request')
             
-    return render(request, 'account/password_reset_otp_verify.html')
+            remaining_attempts = 5 - attempts
+            messages.error(request, f"Kode OTP salah! Anda memiliki {remaining_attempts} percobaan lagi.")
+
+    context = {
+        "otp_expiry_timestamp": expiry_timestamp
+    }
+    return render(request, 'account/password_reset_otp_verify.html', context)
 
 def set_new_password(request):
     if not request.session.get('reset_otp_verified'):
@@ -313,12 +420,16 @@ def authView(request):
                 #messages.success(request, f"Kode OTP telah dikirim ke {email}. Mohon periksa email Anda.")
                 #return redirect("otp_verify")
 
-                print("========================================")
-                print(f"SIMULASI MENGIRIM OTP KE: {nomor_telepon}")
-                print(f"KODE OTP: {otp}")
-                print("========================================")
+                #print("========================================")
+                #print(f"SIMULASI MENGIRIM OTP KE: {nomor_telepon}")
+                #print(f"KODE OTP: {otp}")
+                #print("========================================")
 
-                messages.success(request, f"Kode OTP telah dikirim (cek terminal Anda).")
+                #messages.success(request, f"Kode OTP telah dikirim (cek terminal Anda).")
+                if kirim_otp_via_sms(nomor_telepon, otp):
+                    messages.success(request, f"Kode OTP telah dikirim ke nomor WhatsApp Anda.")
+                else:
+                    messages.error(request, "Gagal mengirim OTP. Pastikan nomor WhatsApp Anda aktif dan coba lagi.")
                 return redirect("otp_verify")
             else:
                 print(f"RECAPTCHA V3 RESULT: {result}") #Tampilkan hasil score(Hapus ini jika tidak mode DEBUG!)
@@ -438,12 +549,18 @@ def resend_otp(request):
     #    fail_silently=False,
     #)
 
-    print("========================================")
-    print(f"SIMULASI MENGIRIM ULANG OTP KE: {nomor_telepon}")
-    print(f"KODE OTP BARU: {otp}")
-    print("========================================")
+    #print("========================================")
+    #print(f"SIMULASI MENGIRIM ULANG OTP KE: {nomor_telepon}")
+    #print(f"KODE OTP BARU: {otp}")
+    #print("========================================")
 
-    messages.success(request, "OTP telah dikirim ulang ke email Anda.")
+    #messages.success(request, "OTP telah dikirim ulang ke email Anda.")
+
+    if kirim_otp_via_sms(nomor_telepon, otp):
+        messages.success(request, "Kode OTP baru telah dikirim ulang ke nomor WhatsApp Anda.")
+    else:
+        messages.error(request, "Gagal mengirim ulang OTP. Silakan coba lagi nanti.")
+        
     return redirect("otp_verify")
 
 @login_required
@@ -477,10 +594,6 @@ def custom_404(request, exception):
 def custom_500(request):
     return render(request, '500.html', status=500)
 
-
-#Level user:
-#PERINGATAN!!! Jangan buat >= harus == jika dilakukan secara produksi.
-#Jika ini tidak segera ditangani, akan terjadinya broken access controll(OWASP A01:2021)
 def level_peserta(user):
     return user.is_authenticated and user.level == 1
 
@@ -492,16 +605,6 @@ def level_pengurus_sasana(user):
 
 def level_pengurus_daerah(user):
     return user.is_authenticated and user.level == 4
-
-def level_pengurus_daerah_dan_instruktur(user):
-    return user.is_authenticated and user.level in [2, 4]
-
-def level_pengurus_daerah_dan_sasana(user):
-    return user.is_authenticated and user.level in [3, 4]
-
-def level_pengurus_daerah_sasana_dan_instruktur(user):
-    return user.is_authenticated and user.level in [2, 3, 4]
-
 
 # Dari Bintang:
 # Sasana
@@ -559,23 +662,24 @@ def my_sasana_profile(request):
     # Buat dictionary kosong untuk menampung konteks
     context = {}
     try:
-        # Cari sasana, jika ketemu, masukkan ke dalam context
-        sasana = Sasana.objects.get(pengurus=request.user)
+        pengurus_info = PengurusSasana.objects.get(user=request.user)
+        sasana = pengurus_info.sasana
         context['sasana'] = sasana
-    except Sasana.DoesNotExist:
+
+    except PengurusSasana.DoesNotExist:
         # Jika TIDAK KETEMU, masukkan pesan error ke dalam context
         context['pesan_error'] = "Maaf, akun Anda belum terdaftar di sasana manapun. Silakan lapor kepada Pengurus Daerah untuk mengelola data sasana anda."
         # Pastikan 'sasana' tidak ada di context atau nilainya None
         context['sasana'] = None
     
     # Render template dengan context yang sudah disiapkan
-    return render(request, 'profile_sasana.html', context)
+    return render(request, 'profile_pengurus_sasana.html', context)
 
 # Edit Sasana
-@user_passes_test(level_pengurus_sasana)
+@user_is_authorized_for_sasana
 @login_required
 def update_sasana(request, id_sasana):
-    sasana = get_object_or_404(Sasana, id_sasana=id_sasana, pengurus=request.user)
+    sasana = get_object_or_404(Sasana, id_sasana=id_sasana)
 
     if request.method == 'POST':
         form = SasanaForm(request.POST, request.FILES, instance=sasana)
@@ -594,7 +698,10 @@ def update_sasana(request, id_sasana):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Data sasana berhasil diubah!')
-                return redirect('my-sasana-profile')
+                if request.user.level == 4:
+                    return redirect('list-sasana')
+                else:
+                    return redirect('my-sasana-profile')
         else:
             messages.error(request, 'Gagal menyimpan, terdeteksi adanya aktivitas mencurigakan.')
             
@@ -608,19 +715,19 @@ def update_sasana(request, id_sasana):
     return render(request, 'sasana_form.html', context)
 
 # Delete Sasana
-@user_passes_test(level_pengurus_sasana)
+@user_is_authorized_for_sasana
 @login_required
 def delete_sasana(request, id_sasana):
-    sasana = get_object_or_404(Sasana, id_sasana=id_sasana, pengurus=request.user)
+    sasana = get_object_or_404(Sasana, id_sasana=id_sasana)
     if request.method == 'POST':
         sasana.delete()
         messages.success(request, 'Data sasana telah berhasil dihapus.')
-        return redirect('home')
+        return redirect('list-sasana')
     return render(request, 'sasana_confirm_delete.html', {'sasana': sasana})
 
 
 # Peserta
-@user_passes_test(level_pengurus_sasana)
+@user_is_authorized_for_pengurus_sasana_dan_instruktur
 @login_required
 def create_peserta(request, sasana_id):
     # Logika untuk method POST
@@ -679,7 +786,7 @@ def create_peserta(request, sasana_id):
     return render(request, 'peserta_form.html', context)
 
 # List Peserta
-@user_passes_test(level_pengurus_daerah_sasana_dan_instruktur)
+@user_is_authorized_for_pengurus_sasana_dan_instruktur
 @login_required
 def list_peserta(request, sasana_id):
     sasana = get_object_or_404(Sasana, id_sasana=sasana_id)
@@ -687,14 +794,14 @@ def list_peserta(request, sasana_id):
     return render(request, 'peserta_list.html', {'data': data, 'sasana': sasana})
 
 # Detail Peserta
-@user_passes_test(level_pengurus_daerah_sasana_dan_instruktur)
+@user_is_authorized_for_Peserta_with_id
 @login_required
 def detail_peserta(request, id_peserta):
     peserta = get_object_or_404(Peserta, id_peserta=id_peserta)
     return render(request, 'peserta_detail.html', {'peserta': peserta})
 
 # Edit Peserta
-@user_passes_test(level_pengurus_sasana)
+@user_is_authorized_for_Peserta_with_id
 @login_required
 def update_peserta(request, id_peserta):
     peserta = get_object_or_404(Peserta, id_peserta=id_peserta)
@@ -730,23 +837,38 @@ def update_peserta(request, id_peserta):
     return render(request, 'peserta_form.html', context)
 
 # Delete Peserta
-@user_passes_test(level_pengurus_sasana)
+@user_is_authorized_for_Peserta_with_id
 @login_required
 def delete_peserta(request, id_peserta):
     peserta = get_object_or_404(Peserta, id_peserta=id_peserta)
     sasana_untuk_redirect = peserta.sasana.id_sasana
     if request.method == 'POST':
         peserta.delete()
+        nama_peserta_dihapus = peserta.user.username
+        messages.success(request, f"Data peserta '{nama_peserta_dihapus}' telah berhasil dihapus.")
         return redirect('list-peserta', sasana_id=sasana_untuk_redirect)
     return render(request, 'peserta_confirm_delete.html', {'peserta': peserta})
 
+@login_required
+@user_passes_test(level_peserta)
+def my_peserta_profile(request):
+    context = {}
+    try:
+        peserta = Peserta.objects.get(user=request.user)
+        context['peserta'] = peserta
+
+    except Peserta.DoesNotExist:
+        context['pesan_error'] = "Anda belum terdaftar sebagai peserta di sasana manapun. Silakan pilih lokasi sasana, lalu hubungi pengurus sasana."
+        context['peserta'] = None
+
+    return render(request, 'profile_peserta.html', context)
 
 # Instruktur
-@user_passes_test(level_pengurus_sasana)
+@user_is_authorized_for_pengurus_sasana_data_instruktur
 @login_required
 def create_instruktur(request, sasana_id):
     sasana = get_object_or_404(Sasana, id_sasana=sasana_id)
-
+    
     if request.method == 'POST':
         form = InstrukturForm(request.POST, request.FILES)
 
@@ -765,7 +887,11 @@ def create_instruktur(request, sasana_id):
                 instruktur = form.save(commit=False)
                 instruktur.sasana = sasana
                 instruktur.save()
-                messages.success(request, 'Data instruktur berhasil ditambahkan!')
+                user_yang_dipromosikan = instruktur.user
+                Peserta.objects.filter(user=user_yang_dipromosikan).delete()
+                user_yang_dipromosikan.level = 2
+                user_yang_dipromosikan.save()
+                messages.success(request, f"Data instruktur berhasil ditambahkan dan '{user_yang_dipromosikan.username}' berhasil dipromosikan menjadi instruktur.")
                 return redirect('list-instruktur', sasana_id=sasana.id_sasana)
         else:
             messages.error(request, 'Gagal menyimpan, terdeteksi adanya aktivitas mencurigakan.')
@@ -789,7 +915,7 @@ def create_instruktur(request, sasana_id):
     return render(request, 'instruktur_form.html', context)
 
 # List Instruktur
-@user_passes_test(level_pengurus_daerah_dan_sasana)
+@user_is_authorized_for_pengurus_daerah_sasana_dan_instruktur
 @login_required
 def list_instruktur(request, sasana_id):
     sasana = get_object_or_404(Sasana, id_sasana=sasana_id)
@@ -797,14 +923,14 @@ def list_instruktur(request, sasana_id):
     return render(request, 'instruktur_list.html', {'data': data, 'sasana': sasana})
 
 # Detail Instruktur
-@user_passes_test(level_pengurus_daerah_dan_sasana)
+@user_is_authorized_for_instruktur_detail
 @login_required
 def detail_instruktur(request, id_instruktur):
     instruktur = get_object_or_404(Instruktur, id_instruktur=id_instruktur)
     return render(request, 'instruktur_detail.html', {'instruktur': instruktur})
 
 # Update Instruktur
-@user_passes_test(level_pengurus_sasana)
+@user_is_authorized_for_pengurus_sasana_edit_instruktur
 @login_required
 def update_instruktur(request, id_instruktur):
     instruktur = get_object_or_404(Instruktur, id_instruktur=id_instruktur)
@@ -835,22 +961,92 @@ def update_instruktur(request, id_instruktur):
         form = InstrukturForm(instance=instruktur)
 
     context = {
-        'form': form, 'sasana': sasana, 'instrutur': instruktur,
+        'form': form, 'sasana': sasana, 'instruktur': instruktur,
         'site_key_v3': settings.RECAPTCHA_V3_SITE_KEY
         }
     return render(request, 'instruktur_form.html', context)
 
 # Delete Instruktur
-@user_passes_test(level_pengurus_sasana)
+@user_is_authorized_for_pengurus_sasana_edit_instruktur
 @login_required
 def delete_instruktur(request, id_instruktur):
     instruktur = get_object_or_404(Instruktur, id_instruktur=id_instruktur)
     sasana_untuk_redirect = instruktur.sasana.id_sasana
 
     if request.method == 'POST':
+        nama_instruktur_dihapus = instruktur.user.username
         instruktur.delete()
+        messages.success(request, f"Data instruktur '{nama_instruktur_dihapus}' telah dihapus dan jabatannya dikembalikan menjadi Peserta.")
         return redirect('list-instruktur', sasana_id=sasana_untuk_redirect)
     return render(request, 'instruktur_confirm_delete.html', {'instruktur': instruktur})
+
+@login_required
+@user_passes_test(level_instruktur)
+def my_instruktur_profile(request):
+    context = {}
+    try:
+        instrutur_info = Instruktur.objects.get(user=request.user)
+        instruktur = instrutur_info
+        context['instruktur'] = instrutur_info
+
+    except Peserta.DoesNotExist:
+        context['pesan_error'] = "Maaf, akun Anda belum terdaftar di sasana manapun. Silakan lapor kepada Pengurus Sasana untuk mengelola data Instruktur anda."
+        context['instruktur'] = None
+
+    return render(request, 'profile_instruktur.html', context)
+
+# Pengurus Sasana
+@login_required
+@user_passes_test(level_pengurus_daerah)
+def create_pengurus(request, sasana_id):
+    sasana = get_object_or_404(Sasana, id_sasana=sasana_id)
+    if request.method == 'POST':
+        form = PengurusSasanaForm(request.POST)
+        if form.is_valid():
+            pengurus = form.save(commit=False)
+            pengurus.sasana = sasana
+            pengurus.save()
+            return redirect('list-pengurus', sasana_id=sasana.id_sasana)
+    else:
+        form = PengurusSasanaForm()
+    return render(request, 'pengurus_sasana_form.html', {'form': form, 'sasana': sasana})
+
+@login_required
+@user_passes_test(level_pengurus_daerah)
+def list_pengurus(request, sasana_id):
+    sasana = get_object_or_404(Sasana, id_sasana=sasana_id)
+    data = PengurusSasana.objects.filter(sasana=sasana)
+    return render(request, 'pengurus_sasana_list.html', {'data': data, 'sasana': sasana})
+
+@login_required
+@user_passes_test(level_pengurus_daerah)
+def detail_pengurus(request, id_pengurus):
+    pengurus = get_object_or_404(PengurusSasana, id_pengurus=id_pengurus)
+    return render(request, 'pengurus_sasana_detail.html', {'pengurus': pengurus})
+
+@login_required
+@user_is_authorized_for_pengurus
+def update_pengurus(request, id_pengurus):
+    pengurus = get_object_or_404(PengurusSasana, id_pengurus=id_pengurus)
+    sasana = pengurus.sasana
+    if request.method == 'POST':
+        form = PengurusSasanaForm(request.POST, instance=pengurus)
+        if form.is_valid():
+            form.save()
+            return redirect('list-pengurus', sasana_id=sasana.id_sasana)
+    else:
+        form = PengurusSasanaForm(instance=pengurus)
+    return render(request, 'pengurus_sasana_form.html', {'form': form, 'sasana': sasana, 'pengurus': pengurus})
+
+@login_required
+@user_passes_test(level_pengurus_daerah)
+def delete_pengurus(request, id_pengurus):
+    pengurus = get_object_or_404(PengurusSasana, id_pengurus=id_pengurus)
+    sasana_id = pengurus.sasana.id_sasana  # Simpan sasana_id sebelum object dihapus
+    if request.method == 'POST':
+        pengurus.delete()
+        return redirect('list-pengurus', sasana_id=sasana_id)
+    return render(request, 'pengurus_sasana_confirm_delete.html', {'pengurus': pengurus})
 
 # Untuk Reza
 def index_view(request):
@@ -871,7 +1067,7 @@ def pengaturan_view(request):
 #Untuk bang Anka, templates dari Reza:
 
 @login_required
-@user_passes_test(lambda u: u.level >= 2) # Pastikan hanya level yang sesuai bisa akses
+@user_passes_test(lambda u: u.level == 2)
 def analisa_view(request):
     if request.method == 'POST':
         if 'video_file' not in request.FILES:
@@ -909,6 +1105,7 @@ def analisa_view(request):
 
 
 @login_required
+@user_passes_test(lambda u: u.level == 2)
 def check_status_view(request, job_id):
     """
     View ini dipanggil oleh JavaScript untuk memeriksa status job.

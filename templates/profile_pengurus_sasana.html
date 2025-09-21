@@ -40,20 +40,21 @@
 
             {% if sasana %}
             <div class="card-body p-4">
-                {% if sasana.pengurus.profile.image %}
+                {% if sasana.profile %}
                     <div class="text-center mb-4">
-                        <img src="{{ sasana.pengurus.profile.image.url }}" alt="Profil {{ sasana.pengurus.username }}" class="img-fluid rounded-circle" style="max-width: 150px; height: 150px; object-fit: cover; border: 3px solid #dee2e6;">
+                        <img src="{{ sasana.profile.url }}" alt="Profil {{ sasana.nama_sasana }}" class="img-fluid rounded" style="max-width: 250px; object-fit: cover; border: 3px solid #dee2e6;">
                     </div>
                 {% else %}
                     <div class="text-center mb-4">
-                        <img src="{% static 'images/avatar.svg' %}" alt="Default Avatar" class="img-fluid rounded-circle" style="max-width: 150px; height: 150px; object-fit: cover; border: 3px solid #dee2e6;">
+                        <img src="{% static 'images/no_image.jpg' %}" alt="Default no image" class="img-fluid rounded" style="max-width: 250px; object-fit: cover; border: 3px solid #dee2e6;">
                     </div>
                 {% endif %}
 
-                <h4 class="card-title text-center mb-4">{{ sasana.pengurus }}</h4>
+                <h3 class="card-title text-center mb-1">Sasana: {{ sasana.nama_sasana }}</h3>
+                <h5 class="text-center text-muted mb-4">Pengurus: {{ user.username }}</h5>
 
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>Nama:</strong> {{ sasana.pengurus }}</li>
+                    <li class="list-group-item"><strong>Nama Pengurus:</strong> {{ user.username }}</li>
                     <li class="list-group-item"><strong>Sejak:</strong> {{ sasana.sejak }}</li>
                     <li class="list-group-item"><strong>Alamat:</strong> {{ sasana.alamat_sasana }}</li>
                     <li class="list-group-item"><strong>Wilayah:</strong> {{ sasana.kelurahan }}, {{ sasana.kecamatan }}, {{ sasana.kota_kabupaten }}, {{ sasana.provinsi }}</li>
@@ -76,7 +77,6 @@
                     {% if user.level == 3 %}
                     <a href="{% url "index" %}" class="btn btn-secondary">Kembali ke Home</a>
                     <a href="{% url 'update-sasana' sasana.id_sasana %}" class="btn btn-sm btn-warning">Edit</a>
-                    <a href="{% url 'delete-sasana' sasana.id_sasana %}" class="btn btn-sm btn-danger">Hapus</a>
                     <a href="{% url 'list-instruktur' sasana.id_sasana %}" class="btn btn-sm btn-success">Data Instruktur</a>
                     <a href="{% url 'list-peserta' sasana.id_sasana %}" class="btn btn-sm btn-success">Data Peserta</a>
                     {% endif %}
@@ -89,7 +89,7 @@
             </div>
             
             <div class="mt-4 text-center">
-                <a href="{% url 'home' %}" class="btn btn-secondary">Kembali ke Home</a>
+                <a href="{% url 'index' %}" class="btn btn-secondary">Kembali ke Home</a>
             </div>
             {% endif %}
 

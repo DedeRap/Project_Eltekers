@@ -35,6 +35,7 @@ urlpatterns = [
     path("toggle-dark-mode/", views.toggle_dark_mode, name='toggle_dark_mode'),
 
     # URL dari Bintang
+    # Sasana
     path('sasana/', views.list_sasana, name='list-sasana'),
     path('sasana/profil/', views.my_sasana_profile, name='my-sasana-profile'), 
     path('sasana/tambah/', views.create_sasana, name='create-sasana'),
@@ -42,17 +43,28 @@ urlpatterns = [
     path('sasana/<uuid:id_sasana>/edit/', views.update_sasana, name='update-sasana'),
     path('sasana/<uuid:id_sasana>/hapus/', views.delete_sasana, name='delete-sasana'),
 
+    # Peserta
     path('<uuid:sasana_id>/peserta/', views.list_peserta, name='list-peserta'),
     path('<uuid:sasana_id>/peserta/tambah/', views.create_peserta, name='create-peserta'),
+    path('peserta/profil/', views.my_peserta_profile, name='my-peserta-profile'),
     path('peserta/<uuid:id_peserta>/', views.detail_peserta, name='detail-peserta'),
     path('peserta/<uuid:id_peserta>/edit/', views.update_peserta, name='update-peserta'),
     path('peserta/<uuid:id_peserta>/hapus/', views.delete_peserta, name='delete-peserta'),
 
+    # Instruktur
     path('<uuid:sasana_id>/instruktur/', views.list_instruktur, name='list-instruktur'),
     path('<uuid:sasana_id>/instruktur/tambah/', views.create_instruktur, name='create-instruktur'),
+    path('instruktur/profil/', views.my_instruktur_profile, name='my-instruktur-profile'),
     path('instruktur/<uuid:id_instruktur>/', views.detail_instruktur, name='detail-instruktur'),
     path('instruktur/<uuid:id_instruktur>/edit/', views.update_instruktur, name='update-instruktur'),
     path('instruktur/<uuid:id_instruktur>/hapus/', views.delete_instruktur, name='delete-instruktur'),
+
+    # Pengurus Sasana
+    path('<uuid:sasana_id>/pengurus/', views.list_pengurus, name='list-pengurus'),
+    path('<uuid:sasana_id>/pengurus/tambah/', views.create_pengurus, name='create-pengurus'),
+    path('pengurus/<uuid:id_pengurus>/', views.detail_pengurus, name='detail-pengurus'),
+    path('pengurus/<uuid:id_pengurus>/edit/', views.update_pengurus, name='update-pengurus'),
+    path('pengurus/<uuid:id_pengurus>/hapus/', views.delete_pengurus, name='delete-pengurus'),
 
     # URL dari Bu Binti
     path('input/', views.input_sasana, name='input_sasana'),

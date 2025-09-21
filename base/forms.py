@@ -14,7 +14,7 @@ import bleach
 from allauth.account.forms import LoginForm
 # Dari Bintang:
 from django import forms
-from .models import Sasana, Peserta, Instruktur
+from .models import Sasana, Peserta, Instruktur, PengurusSasana
 
 User = get_user_model()
 
@@ -82,6 +82,7 @@ class CustomLoginForm(AuthenticationForm):
         )
     
 class ProfileForm(forms.ModelForm):
+    displayname = forms.CharField(required=False)
     class Meta:
         model = Profile
         fields = ['image', 'displayname', 'info']
@@ -138,12 +139,12 @@ class SasanaForm(forms.ModelForm):
         widgets = {
             'nama_sasana': forms.TextInput(attrs={'class': 'form-control'}),
             #'pengurus': forms.Select(attrs={'class': 'form-select'}),
-            'sejak': forms.NumberInput(attrs={'class': 'form-control'}),
+            'sejak': forms.NumberInput(attrs={'class': 'form-control', 'min':1000, 'step':1, 'placeholder': 'Tahun'}),
             'alamat_sasana': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'jumlah_instruktur': forms.NumberInput(attrs={'class': 'form-control'}),
-            'jumlah_peserta': forms.NumberInput(attrs={'class': 'form-control'}),
-            'peserta_aktif': forms.NumberInput(attrs={'class': 'form-control'}),
-            'jumlah_latihan_per_minggu': forms.NumberInput(attrs={'class': 'form-control'}),
+            'jumlah_instruktur': forms.NumberInput(attrs={'class': 'form-control','min':0, 'max':50, 'step':1, 'placeholder': 'Masukkan Jumlah Instruktur'}),
+            'jumlah_peserta': forms.NumberInput(attrs={'class': 'form-control', 'min':0, 'max':1000, 'step':1, 'placeholder': 'Masukkan Jumlah Peserta'}),
+            'peserta_aktif': forms.NumberInput(attrs={'class': 'form-control', 'min':0, 'max':1000, 'step':1, 'placeholder': 'Masukkan Jumlah Peserta Aktif'}),
+            'jumlah_latihan_per_minggu': forms.NumberInput(attrs={'class': 'form-control', 'min':0, 'max':31, 'step':1, 'placeholder': 'Masukkan Jumlah Latihan per Minggu'}),
             'link_gmap': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://maps.app.goo.gl/abcdefg12345'}),
             'profile': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
@@ -167,22 +168,107 @@ class SasanaForm(forms.ModelForm):
 class PesertaForm(forms.ModelForm):
     class Meta:
         model = Peserta
-        fields = '__all__'
+        fields = ['user', 'tanggal_lahir_peserta', 'kendala_terapi', 'sasana']
         widgets = {
-            'nama_peserta': forms.TextInput(attrs={'class': 'form-control'}),
+            #'nama_peserta': forms.TextInput(attrs={'class': 'form-control'}),
+            'user' : forms.Select(attrs={'class': 'form-select'}),
             'tanggal_lahir_peserta': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'kendala_terapi': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'sasana': forms.Select(attrs={'class': 'form-control'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        kandidat_peserta = User.objects.filter(level=1).exclude(
+            id__in=Peserta.objects.values_list('user_id', flat=True)
+        )
+        
+        # Logika ini hanya berjalan saat MENGEDIT, BUKAN saat menambah baru
+        if self.instance and self.instance.pk and self.instance.tanggal_lahir_peserta:
+            kandidat_peserta = kandidat_peserta | User.objects.filter(pk=self.instance.user.pk)
+            
+        self.fields['user'].queryset = kandidat_peserta
+        self.fields['user'].label_from_instance = lambda obj: f"{obj.username}"
+
+        if self.instance and self.instance.pk and self.instance.tanggal_lahir_peserta:
+            self.initial['tanggal_lahir_peserta'] = self.instance.tanggal_lahir_peserta.strftime('%Y-%m-%d')
+
+# Di dalam file base/forms.py
+
 class InstrukturForm(forms.ModelForm):
     class Meta:
         model = Instruktur
-        fields = '__all__'
+        fields = ['user', 'tanggal_sertifikasi', 'file_sertifikat', 'sasana']
         widgets = {
-            'nama_instruktur': forms.TextInput(attrs={'class': 'form-control'}),
-            'sertifikasi': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'user': forms.Select(attrs={'class': 'form-select'}),
             'tanggal_sertifikasi': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'file_sertifikat': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'sasana': forms.Select(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Ambil daftar Peserta (level 1) yang bisa dipromosikan
+        kandidat_instruktur = User.objects.filter(level=1).exclude(
+            id__in=Instruktur.objects.values_list('user_id', flat=True)
+        )
+        
+        # --- SEMUA LOGIKA EDIT DISATUKAN DI SINI ---
+        if self.instance and self.instance.pk and self.instance.tanggal_sertifikasi:
+            # 1. Tambahkan user yang sedang diedit ke dalam dropdown
+            kandidat_instruktur = kandidat_instruktur | User.objects.filter(pk=self.instance.user.pk)
+            
+            # 2. Isi field tanggal sertifikasi secara manual
+            if self.instance.tanggal_sertifikasi:
+                self.initial['tanggal_sertifikasi'] = self.instance.tanggal_sertifikasi.strftime('%Y-%m-%d')
+        
+        # Atur queryset dan tampilan nama untuk dropdown user
+        self.fields['user'].queryset = kandidat_instruktur
+        self.fields['user'].label_from_instance = lambda obj: f"{obj.username}"
+        
+    def clean_file_sertifikat(self):
+        uploaded_file = self.cleaned_data.get('file_sertifikat', None)
+            
+        # Jika ini form BARU dan tidak ada file yang diunggah, tampilkan error.
+        if not self.instance.pk and not uploaded_file:
+            raise forms.ValidationError("File sertifikat wajib diunggah untuk instruktur baru.")
+            
+        # Jika ini form EDIT dan tidak ada file BARU yang diunggah, pertahankan file lama.
+        if self.instance.pk and not uploaded_file:
+            return self.instance.file_sertifikat
+            
+        # Jika ada file BARU yang diunggah, validasi ukurannya.
+        if uploaded_file:
+            if uploaded_file.size > 5 * 1024 * 1024: # 5MB
+                raise forms.ValidationError("Ukuran file tidak boleh lebih dari 5MB!")
+                
+        return uploaded_file
+
+class PengurusSasanaForm(forms.ModelForm):
+    class Meta:
+        model = PengurusSasana
+        #fields = '__all__'
+        fields = ['user', 'jabatan', 'sasana']
+        widgets = {
+            #'peserta': forms.Select(attrs={'class': 'form-control'}),
+            'user': forms.Select(attrs={'class': 'form-select'}),
+            #'no_telp_pengurus_sasana': forms.TextInput(attrs={'class': 'form-control'}),
+            'jabatan': forms.TextInput(attrs={'class': 'form-control'}),
+            'sasana': forms.Select(attrs={'class': 'form-control'})
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        kandidat_pengurus = User.objects.filter(level=3).exclude(
+            id__in=PengurusSasana.objects.values_list('user_id', flat=True)
+        )
+        
+        # Logika ini hanya berjalan saat MENGEDIT, BUKAN saat menambah baru
+        if self.instance and self.instance.pk and self.instance.jabatan:
+            kandidat_pengurus = kandidat_pengurus | User.objects.filter(pk=self.instance.user.pk)
+            
+        self.fields['user'].queryset = kandidat_pengurus
+        self.fields['user'].label_from_instance = lambda obj: f"{obj.username}"

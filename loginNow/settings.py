@@ -59,8 +59,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'guardian',
-    'base',
     'accounts',
+    'base',
     'video_processor',
     'event',
 ]
@@ -247,6 +247,10 @@ AUTHENTICATION_FORM = 'base.forms.CaptchaLoginForm'
 RECAPTCHA_V3_SITE_KEY = config('PUBLICKEY_V3_RECAPTCHA')
 RECAPTCHA_V3_SECRET_KEY = config('PRIVATEKEY_V3_RECAPTCHA')
 RECAPTCHA_REQUIRED_SCORE = 0.85
+
+#SMS_TOKEN
+WA_API_TOKEN = config('WABLAS_API_KEY')
+WA_SECRET_TOKEN = config('WABLAS_SECRET_KEY')
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # DOMAIN = '127.0.0.1:8000'  # atau ganti dengan domain aslimu saat deploy

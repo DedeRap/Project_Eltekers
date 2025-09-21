@@ -20,7 +20,6 @@
                 <tr>
                     <th>No</th>
                     <th>Nama Instruktur</th>
-                    <th>Sertifikasi</th>
                     <th>Tanggal Sertifikasi</th>
                     <th>File Sertifikat</th>
                     <th>Aksi</th>
@@ -30,16 +29,15 @@
                 {% for s in data %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
-                    <td>{{ s.nama_instruktur }}</td>
-                    <td>{{ s.sertifikasi }}</td>
+                    <td>{{ s.user.username }}</td>
                     <td>{{ s.tanggal_sertifikasi }}</td>
                     <td>{{ s.file_sertifikat }}</td>
                     <td>
-                        {% if user.level == 2 or user.level == 3 or user.level == 4 %}
+                        {% if user.level == 3 or user.level == 4 %}
                         <a href="{% url 'detail-instruktur' s.id_instruktur %}" class="btn btn-sm btn-info text-white">Lihat</a>
-                        {% endif %}
+                        {% endif %} 
 
-                        {% if user.level == 3 %}
+                        {% if user.level == 3 or user.level == 2 %}
                         <a href="{% url 'update-instruktur' s.id_instruktur %}" class="btn btn-sm btn-warning">Edit</a>
                         <a href="{% url 'delete-instruktur' s.id_instruktur %}" class="btn btn-sm btn-danger">Hapus</a>
                         {% endif %}
@@ -59,7 +57,7 @@
         <a href="{% url 'my-sasana-profile' %}" class="btn btn-primary mt-3">Kembali</a>
         {% endif %}
 
-        {% if user.level == 3 %}
+        {% if user.level == 3 or user.level == 2 %}
          <a href="{% url 'create-instruktur' sasana.id_sasana %}" class="btn btn-primary mt-3">Tambah Data Baru</a>
         {% endif %}
     </div>

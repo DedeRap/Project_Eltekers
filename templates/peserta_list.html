@@ -13,7 +13,7 @@
     </nav>
 
     <div class="container mt-5">
-        <h3 class="mb-4">Data Instruktur - {{ sasana.nama_sasana }}</h3>
+        <h3 class="mb-4">Data Peserta - {{ sasana.nama_sasana }}</h3>
         <table class="table table-bordered table-striped">
             <thead class="table-primary">
                 <tr>
@@ -27,7 +27,7 @@
                 {% for s in data %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
-                    <td>{{ s.nama_peserta }}</td>
+                    <td>{{ s.user.username }}</td>
                     <td>{{ s.tanggal_lahir_peserta }}</td>
                     <td>
                         {% if user.level == 2 or user.level == 3 or user.level == 4 %}
@@ -51,6 +51,9 @@
         <a href="{% url 'list-sasana' %}" class="btn btn-primary mt-3">Kembali</a>
         {% elif user.level == 3 %}
         <a href="{% url 'my-sasana-profile' %}" class="btn btn-primary mt-3">Kembali</a>
+        <a href="{% url 'create-peserta' sasana.id_sasana %}" class="btn btn-primary mt-3">Tambah Data Baru</a>
+        {% elif user.level == 2 %}
+        <a href="{% url 'my-instruktur-profile' %}" class="btn btn-primary mt-3">Kembali</a>
         <a href="{% url 'create-peserta' sasana.id_sasana %}" class="btn btn-primary mt-3">Tambah Data Baru</a>
         {% else %}
         <a href="{% url 'index' %}" class="btn btn-primary mt-3">Kembali ke Home</a>

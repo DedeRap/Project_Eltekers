@@ -28,6 +28,8 @@ urlpatterns = [
     path('password-reset/', views.request_password_reset_otp, name='password_reset_request'),
     path('password-reset/verify/', views.verify_password_reset_otp, name='password_reset_otp_verify'),
     path('password-reset/set/', views.set_new_password, name='password_reset_set_new'),
+    path('password-reset/resend-otp/', views.resend_password_reset_otp, name='password_reset_resend_otp'),
+    path('password-reset/set-new/', views.set_new_password, name='password_reset_set_new'),
     # Setelah Login
     path('password-change/', views.CustomPasswordChangeView.as_view(template_name='account/password_change_form.html', success_url='/accounts/password-change/done/'), name='password_change'),
     path('password-change/done/', auth_views.PasswordChangeDoneView.as_view(template_name='account/password_change_done.html'), name='password_change_done'),
